@@ -44,6 +44,14 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    // Launchers must not exit when Back is pressed — swallow it at the home screen.
+    // Sub-screens (Settings, GameDetail, etc.) still handle Back normally via the nav stack.
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        // Only block Back if there's nothing left to pop (i.e. we're at the root home screen)
+        // The Compose nav back stack handles Back for all other screens automatically.
+    }
+
     private fun requestStoragePermissions() {
         val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             arrayOf(
