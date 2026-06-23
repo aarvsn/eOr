@@ -15,12 +15,12 @@ val localProperties = Properties().apply {
 
 android {
     namespace = "com.gamelaunch.frontend"
-    compileSdk = 35
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.gamelaunch.frontend"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0.0"
 
@@ -52,9 +52,10 @@ android {
         buildConfig = true
     }
 
-    room {
-        schemaDirectory("$projectDir/schemas")
-    }
+}
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {

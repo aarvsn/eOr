@@ -22,13 +22,13 @@ class EmulatorRepositoryImpl @Inject constructor(
     private val gson = Gson()
 
     override suspend fun getMappingForPlatform(platformId: String): EmulatorMapping? =
-        emulatorMappingDao.getMappingForPlatform(platformId)?.toDomain()
+        emulatorMappingDao.getMappingForPlatform(platformId)?.let { entityToDomain(it) }
 
     override fun getAllMappings(): Flow<List<EmulatorMapping>> =
-        emulatorMappingDao.getAllMappings().map { it.map(EmulatorMappingEntity::toDomain) }
+        emulatorMappingDao.getAllMappings().map { list -> list.map { entityToDomain(it) } }
 
     override suspend fun upsertMapping(mapping: EmulatorMapping) {
-        emulatorMappingDao.upsertMapping(mapping.toEntity())
+        emulatorMappingDao.upsertMapping(domainToEntity(mapping))
     }
 
     override suspend fun deleteMappingForPlatform(platformId: String) {
@@ -38,30 +38,30 @@ class EmulatorRepositoryImpl @Inject constructor(
     override fun getInstalledEmulators(): List<InstalledEmulator> =
         packageManagerHelper.getInstalledEmulators()
 
-    private fun EmulatorMappingEntity.toDomain(): EmulatorMapping {
+    private fun entityToDomain(entity: EmulatorMappingEntity): EmulatorMapping {
         val extrasType = object : TypeToken<Map<String, String>>() {}.type
-        val extras: Map<String, String> = runCatching {
-            gson.fromJson(intentExtrasJson, extrasType) ?: emptyMap()
+        val extras = runCatching<Map<String, String>> {
+            gson.fromJson(entity.intentExtrasJson, extrasType) ?: emptyMap()
         }.getOrDefault(emptyMap())
 
         return EmulatorMapping(
-            id = id,
-            platformId = platformId,
-            packageName = packageName,
-            launchAction = launchAction,
+            id = entity.id,
+            platformId = entity.platformId,
+            packageName = entity.packageName,
+            launchAction = entity.launchAction,
             intentExtras = extras,
-            isRetroArch = isRetroArch,
-            retroArchCore = retroArchCore
+            isRetroArch = entity.isRetroArch,
+            retroArchCore = entity.retroArchCore
         )
     }
 
-    private fun EmulatorMapping.toEntity() = EmulatorMappingEntity(
-        id = id,
-        platformId = platformId,
-        packageName = packageName,
-        launchAction = launchAction,
-        intentExtrasJson = gson.toJson(intentExtras),
-        isRetroArch = isRetroArch,
-        retroArchCore = retroArchCore
+    private fun domainToEntity(mapping: EmulatorMapping) = EmulatorMappingEntity(
+        id = mapping.id,
+        platformId = mapping.platformId,
+        packageName = mapping.packageName,
+        launchAction = mapping.launchAction,
+        intentExtrasJson = gson.toJson(mapping.intentExtras),
+        isRetroArch = mapping.isRetroArch,
+        retroArchCore = mapping.retroArchCore
     )
 }

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Controller body -->
+    <path
+        android:fillColor="#E0E0FF"
+        android:pathData="M54,30 C36,30 22,42 22,56 C22,64 26,71 33,76 L37,79 C39,81 43,81 45,79 L49,75 L59,75 L63,79 C65,81 69,81 71,79 L75,76 C82,71 86,64 86,56 C86,42 72,30 54,30 Z" />
+
+    <!-- D-pad vertical bar -->
+    <path
+        android:fillColor="#1A1A2E"
+        android:pathData="M35,47 L43,47 L43,67 L35,67 Z" />
+
+    <!-- D-pad horizontal bar -->
+    <path
+        android:fillColor="#1A1A2E"
+        android:pathData="M27,53 L51,53 L51,61 L27,61 Z" />
+
+    <!-- Button A (red) -->
+    <path
+        android:fillColor="#FF6B6B"
+        android:pathData="M72,61 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" />
+
+    <!-- Button B (teal) -->
+    <path
+        android:fillColor="#4ECDC4"
+        android:pathData="M80,53 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" />
+
+    <!-- Button X (yellow) -->
+    <path
+        android:fillColor="#FFE66D"
+        android:pathData="M64,53 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" />
+
+    <!-- Button Y (green) -->
+    <path
+        android:fillColor="#A8E6CF"
+        android:pathData="M72,45 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" />
+
+</vector>

@@ -45,12 +45,13 @@ class SettingsRepositoryImpl @Inject constructor(
     override val videoMuted: Flow<Boolean> = dataStore.videoMuted
     override val isFirstLaunch: Flow<Boolean> = dataStore.isFirstLaunch
 
-    override suspend fun setRomRootPath(path: String) = dataStore.setRomRootPath(path)
+    override suspend fun setRomRootPath(path: String) { dataStore.setRomRootPath(path) }
 
-    override suspend fun setLayoutMode(mode: LayoutMode) = dataStore.setLayoutMode(mode.name)
+    override suspend fun setLayoutMode(mode: LayoutMode) { dataStore.setLayoutMode(mode.name) }
 
-    override suspend fun setScraperCredentials(ssid: String, sspassword: String) =
+    override suspend fun setScraperCredentials(ssid: String, sspassword: String) {
         dataStore.setSsCredentials(ssid, sspassword)
+    }
 
     override suspend fun updateScraperOptions(
         scrapeBoxArt: Boolean,
@@ -64,8 +65,8 @@ class SettingsRepositoryImpl @Inject constructor(
         dataStore.setScrapeVideos(scrapeVideos)
     }
 
-    override suspend fun setPreferredRegion(region: String) = dataStore.setPreferredRegion(region)
-    override suspend fun setVideoAutoplayDelayMs(ms: Long) = dataStore.setVideoAutoplayDelayMs(ms)
-    override suspend fun setVideoMuted(muted: Boolean) = dataStore.setVideoMuted(muted)
-    override suspend fun setFirstLaunchComplete() = dataStore.setFirstLaunchComplete()
+    override suspend fun setPreferredRegion(region: String) { dataStore.setPreferredRegion(region) }
+    override suspend fun setVideoAutoplayDelayMs(ms: Long) { dataStore.setVideoAutoplayDelayMs(ms) }
+    override suspend fun setVideoMuted(muted: Boolean) { dataStore.setVideoMuted(muted) }
+    override suspend fun setFirstLaunchComplete() { dataStore.setFirstLaunchComplete() }
 }
