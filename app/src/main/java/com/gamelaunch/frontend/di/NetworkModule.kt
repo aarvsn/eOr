@@ -1,0 +1,57 @@
+package com.gamelaunch.frontend.di
+
+import com.gamelaunch.frontend.data.network.ScreenScraperApi
+import com.gamelaunch.frontend.data.network.interceptor.RateLimitInterceptor
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
+import javax.inject.Singleton
+
+@Module
+@InstallIn(SingletonComponent::class)
+object NetworkModule {
+
+    private const val BASE_URL = "https://www.screenscraper.fr/api2/"
+
+    @Provides
+    @Singleton
+    fun provideRateLimitInterceptor(): RateLimitInterceptor = RateLimitInterceptor(1200)
+
+    @Provides
+    @Singleton
+    fun provideOkHttpClient(rateLimitInterceptor: RateLimitInterceptor): OkHttpClient {
+        val loggingInterceptor = HttpLoggingInterceptor().apply {
+            level = if (com.gamelaunch.frontend.BuildConfig.DEBUG)
+                HttpLoggingInterceptor.Level.BASIC
+            else
+                HttpLoggingInterceptor.Level.NONE
+        }
+        return OkHttpClient.Builder()
+            .addInterceptor(rateLimitInterceptor)
+            .addInterceptor(loggingInterceptor)
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit =
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+    @Provides
+    @Singleton
+    fun provideScreenScraperApi(retrofit: Retrofit): ScreenScraperApi =
+        retrofit.create(ScreenScraperApi::class.java)
+}

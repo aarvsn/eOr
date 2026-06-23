@@ -1,0 +1,5 @@
+-keep class com.gamelaunch.frontend.data.network.dto.** { *; }
+-keepattributes Signature
+-keepattributes *Annotation*
+-dontwarn okhttp3.**
+-dontwarn retrofit2.**

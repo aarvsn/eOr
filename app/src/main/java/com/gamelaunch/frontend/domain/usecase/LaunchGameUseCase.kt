@@ -1,0 +1,19 @@
+package com.gamelaunch.frontend.domain.usecase
+
+import com.gamelaunch.frontend.domain.model.Game
+import com.gamelaunch.frontend.domain.repository.GameRepository
+import com.gamelaunch.frontend.launcher.EmulatorLauncher
+import javax.inject.Inject
+
+class LaunchGameUseCase @Inject constructor(
+    private val emulatorLauncher: EmulatorLauncher,
+    private val gameRepository: GameRepository
+) {
+    suspend operator fun invoke(game: Game): Result<Unit> {
+        val result = emulatorLauncher.launch(game)
+        if (result.isSuccess) {
+            gameRepository.recordPlay(game.id)
+        }
+        return result
+    }
+}

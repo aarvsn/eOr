@@ -1,0 +1,32 @@
+package com.gamelaunch.frontend.data.db.dao
+
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Update
+import androidx.room.Upsert
+import com.gamelaunch.frontend.data.db.entity.GameMediaEntity
+import kotlinx.coroutines.flow.Flow
+
+@Dao
+interface GameMediaDao {
+
+    @Query("SELECT * FROM game_media WHERE game_id = :gameId")
+    suspend fun getMediaForGame(gameId: Long): GameMediaEntity?
+
+    @Query("SELECT * FROM game_media WHERE game_id = :gameId")
+    fun observeMediaForGame(gameId: Long): Flow<GameMediaEntity?>
+
+    @Upsert
+    suspend fun upsertMedia(entity: GameMediaEntity)
+
+    @Query("DELETE FROM game_media WHERE game_id = :gameId")
+    suspend fun deleteMediaForGame(gameId: Long)
+
+    @Query("UPDATE game_media SET video_local = :localPath WHERE game_id = :gameId")
+    suspend fun updateVideoLocalPath(gameId: Long, localPath: String)
+
+    @Query("UPDATE game_media SET box_art_local = :localPath WHERE game_id = :gameId")
+    suspend fun updateBoxArtLocalPath(gameId: Long, localPath: String)
+}

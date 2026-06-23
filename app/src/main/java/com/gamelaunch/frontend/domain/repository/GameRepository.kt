@@ -1,0 +1,22 @@
+package com.gamelaunch.frontend.domain.repository
+
+import com.gamelaunch.frontend.domain.model.Game
+import kotlinx.coroutines.flow.Flow
+
+interface GameRepository {
+    fun getAllGames(): Flow<List<Game>>
+    fun getGamesByPlatform(platformId: String): Flow<List<Game>>
+    suspend fun getGameById(id: Long): Game?
+    suspend fun getUnscrapedGames(): List<Game>
+    fun getFavorites(): Flow<List<Game>>
+    fun getRecentlyPlayed(limit: Int = 20): Flow<List<Game>>
+    fun getDistinctPlatformIds(): Flow<List<String>>
+    suspend fun insertGame(game: Game): Long
+    suspend fun insertGames(games: List<Game>)
+    suspend fun updateGame(game: Game)
+    suspend fun updateScrapedMetadata(gameId: Long, scraperGameId: Long?, title: String, description: String?, genre: String?, releaseYear: Int?, rating: Float?)
+    suspend fun setFavorite(gameId: Long, isFavorite: Boolean)
+    suspend fun recordPlay(gameId: Long)
+    suspend fun deleteGamesNotInPaths(validPaths: List<String>): Int
+    suspend fun getTotalCount(): Int
+}

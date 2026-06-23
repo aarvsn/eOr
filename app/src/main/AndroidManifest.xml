@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
+
+    <queries>
+        <!-- Known emulator packages for intent resolution on API 30+ -->
+        <package android:name="org.libretro.retroarch" />
+        <package android:name="org.dolphinemu.dolphinemu" />
+        <package android:name="org.ppsspp.ppsspp" />
+        <package android:name="com.github.stenzek.duckstation" />
+        <package android:name="com.drastic.ds" />
+        <package android:name="com.explusalpha.GbcEmu" />
+        <package android:name="com.explusalpha.GbaEmu" />
+        <package android:name="com.explusalpha.Snes9xEmu" />
+        <package android:name="com.reicast.emulator" />
+        <package android:name="com.flycast.emulator" />
+        <package android:name="ru.playsoftware.j2meloader" />
+    </queries>
+
+    <application
+        android:name=".GameLauncherApp"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.GameLauncher"
+        android:hardwareAccelerated="true"
+        tools:targetApi="31"
+        xmlns:tools="http://schemas.android.com/tools">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize"
+            android:configChanges="orientation|screenSize|keyboardHidden">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+    </application>
+
+</manifest>
