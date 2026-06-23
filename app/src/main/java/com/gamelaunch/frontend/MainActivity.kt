@@ -1,8 +1,12 @@
 package com.gamelaunch.frontend
 
 import android.Manifest
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -23,12 +27,13 @@ class MainActivity : ComponentActivity() {
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) { /* permissions handled — ROM folder picker is the fallback */ }
+    ) { /* storage permissions handled — ROM folder picker and all-files access are the fallback */ }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         requestStoragePermissions()
+        requestAllFilesAccessIfNeeded()
 
         setContent {
             AppTheme {
@@ -44,12 +49,9 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // Launchers must not exit when Back is pressed — swallow it at the home screen.
-    // Sub-screens (Settings, GameDetail, etc.) still handle Back normally via the nav stack.
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        // Only block Back if there's nothing left to pop (i.e. we're at the root home screen)
-        // The Compose nav back stack handles Back for all other screens automatically.
+        // Swallow Back at the launcher root — sub-screens handle it via the nav stack
     }
 
     private fun requestStoragePermissions() {
@@ -62,5 +64,29 @@ class MainActivity : ComponentActivity() {
             arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
         }
         permissionLauncher.launch(permissions)
+    }
+
+    /**
+     * On Android 11+ (API 30), direct file access to SD cards requires
+     * MANAGE_EXTERNAL_STORAGE ("All files access"). We send the user to the
+     * system settings page once if it hasn't been granted yet.
+     */
+    private fun requestAllFilesAccessIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+            !Environment.isExternalStorageManager()
+        ) {
+            runCatching {
+                startActivity(
+                    Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
+                        data = Uri.parse("package:$packageName")
+                    }
+                )
+            }.onFailure {
+                // Fallback for devices that don't support the per-app page
+                runCatching {
+                    startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
+                }
+            }
+        }
     }
 }

@@ -3,6 +3,7 @@ package com.gamelaunch.frontend.domain.usecase
 import com.gamelaunch.frontend.domain.model.Game
 import com.gamelaunch.frontend.domain.platform.PlatformDetector
 import com.gamelaunch.frontend.domain.repository.GameRepository
+import com.gamelaunch.frontend.util.StorageUtils
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import java.io.File
@@ -25,9 +26,11 @@ class ScanRomsUseCase @Inject constructor(
     )
 
     operator fun invoke(rootPath: String): Flow<ScanProgress> = flow {
-        val rootDir = File(rootPath)
+        // Resolve SAF URIs and broken /tree/... paths to real filesystem paths
+        val resolvedPath = StorageUtils.resolveStoredPath(rootPath)
+        val rootDir = File(resolvedPath)
         if (!rootDir.exists() || !rootDir.isDirectory) {
-            emit(ScanProgress(0, 0, "Root folder not found"))
+            emit(ScanProgress(0, 0, "Root folder not found: $resolvedPath"))
             return@flow
         }
 

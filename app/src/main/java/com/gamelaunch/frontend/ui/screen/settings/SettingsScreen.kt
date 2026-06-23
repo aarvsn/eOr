@@ -44,10 +44,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.gamelaunch.frontend.ui.theme.LayoutMode
+import com.gamelaunch.frontend.util.StorageUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,8 +61,10 @@ fun SettingsScreen(
     onRescanClick: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val state by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val storageVolumes = remember { StorageUtils.getStorageVolumes(context) }
 
     LaunchedEffect(state.emulatorDetectResult) {
         state.emulatorDetectResult?.let { msg ->
@@ -72,7 +76,11 @@ fun SettingsScreen(
     val folderPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { uri ->
-        uri?.let { viewModel.setRomRootPath(it.path ?: it.toString()) }
+        // Convert SAF tree URI to a real filesystem path so the file scanner can use it
+        uri?.let {
+            val path = StorageUtils.resolveTreeUriToPath(it) ?: it.toString()
+            viewModel.setRomRootPath(path)
+        }
     }
 
     Scaffold(
@@ -121,19 +129,47 @@ fun SettingsScreen(
             // ── ROM Library ────────────────────────────────────────────────
             Text("ROM Library", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))
+
+            // Quick-pick buttons for each detected storage volume
+            if (storageVolumes.size > 1) {
+                Text(
+                    "Quick select storage",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(4.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    storageVolumes.forEach { (label, path) ->
+                        OutlinedButton(
+                            onClick = { viewModel.setRomRootPath(path) },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(label, maxLines = 1)
+                        }
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+            }
+
             Row(verticalAlignment = Alignment.CenterVertically) {
                 OutlinedTextField(
                     value = state.romRootPath.ifEmpty { "Not configured" },
-                    onValueChange = {},
-                    readOnly = true,
+                    onValueChange = { viewModel.setRomRootPath(it) },
                     label = { Text("ROM Folder") },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    singleLine = true
                 )
                 Spacer(Modifier.width(8.dp))
                 IconButton(onClick = { folderPicker.launch(null) }) {
-                    Icon(Icons.Default.FolderOpen, contentDescription = "Pick folder")
+                    Icon(Icons.Default.FolderOpen, contentDescription = "Browse")
                 }
             }
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Tip: for SD card use path like /storage/XXXX-XXXX/ROMs",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = onRescanClick, modifier = Modifier.weight(1f)) {
