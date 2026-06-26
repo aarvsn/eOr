@@ -10,13 +10,18 @@ import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import com.gamelaunch.frontend.domain.repository.SettingsRepository
 import com.gamelaunch.frontend.ui.navigation.AppNavGraph
 import com.gamelaunch.frontend.ui.navigation.Screen
 import com.gamelaunch.frontend.ui.theme.AppTheme
+import com.gamelaunch.frontend.ui.theme.NavyBg
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -38,13 +43,25 @@ class MainActivity : ComponentActivity() {
         setContent {
             AppTheme {
                 val navController = rememberNavController()
-                val isFirstLaunch by settingsRepository.isFirstLaunch.collectAsState(initial = true)
-                val startDestination = if (isFirstLaunch) Screen.Settings.route else Screen.Home.route
+                // Use null as initial so NavHost isn't created until we know the real value.
+                // With initial = true (old code) the NavHost always initialized at Settings,
+                // because the DataStore emit arrives after the first Compose frame.
+                val isFirstLaunch by settingsRepository.isFirstLaunch.collectAsState(initial = null)
 
-                AppNavGraph(
-                    navController = navController,
-                    startDestination = startDestination
-                )
+                when (val firstLaunch = isFirstLaunch) {
+                    null -> {
+                        // DataStore hasn't emitted yet — show blank background for ~1 frame
+                        Box(Modifier.fillMaxSize().background(NavyBg))
+                    }
+                    else -> {
+                        val startDestination =
+                            if (firstLaunch) Screen.Settings.route else Screen.Home.route
+                        AppNavGraph(
+                            navController    = navController,
+                            startDestination = startDestination
+                        )
+                    }
+                }
             }
         }
     }

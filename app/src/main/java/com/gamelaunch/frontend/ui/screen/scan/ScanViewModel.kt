@@ -18,13 +18,15 @@ data class ScanUiState(
     val progress: ScanProgress? = null,
     val isComplete: Boolean = false,
     val errorMessage: String? = null,
-    val romRootPath: String = ""
+    val romRootPath: String = "",
+    val existingGameCount: Int = 0
 )
 
 @HiltViewModel
 class ScanViewModel @Inject constructor(
     private val scanRomsUseCase: ScanRomsUseCase,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val gameRepository: com.gamelaunch.frontend.domain.repository.GameRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ScanUiState())
@@ -32,8 +34,9 @@ class ScanViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            val path = settingsRepository.romRootPath.firstOrNull() ?: ""
-            _uiState.update { it.copy(romRootPath = path) }
+            val path  = settingsRepository.romRootPath.firstOrNull() ?: ""
+            val count = gameRepository.getTotalCount()
+            _uiState.update { it.copy(romRootPath = path, existingGameCount = count) }
         }
     }
 
