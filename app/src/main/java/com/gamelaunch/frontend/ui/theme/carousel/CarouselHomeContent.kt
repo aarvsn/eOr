@@ -46,6 +46,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 fun CarouselHomeContent(
     games: List<Game>,
     selectedGameMedia: GameMedia?,
+    mediaForGames: Map<Long, GameMedia>,
     selectedIndex: Int,
     shouldPlayVideo: Boolean,
     videoMuted: Boolean,
@@ -82,9 +83,11 @@ fun CarouselHomeContent(
             )
         } else {
             AsyncGameArtwork(
-                localPath          = selectedGameMedia?.backgroundLocalPath
+                localPath = selectedGameMedia?.screenshotLocalPath
+                    ?: selectedGameMedia?.backgroundLocalPath
                     ?: selectedGameMedia?.boxArtLocalPath,
-                remoteUrl          = selectedGameMedia?.effectiveBackground
+                remoteUrl = selectedGameMedia?.screenshotRemoteUrl
+                    ?: selectedGameMedia?.effectiveBackground
                     ?: selectedGameMedia?.boxArtRemoteUrl,
                 contentDescription = null,
                 modifier           = Modifier.fillMaxSize()
@@ -171,7 +174,7 @@ fun CarouselHomeContent(
                 itemsIndexed(games) { index, game ->
                     CarouselGameCard(
                         game       = game,
-                        media      = if (index == selectedIndex) selectedGameMedia else null,
+                        media      = mediaForGames[game.id],
                         isSelected = index == selectedIndex,
                         onClick    = {
                             if (index == selectedIndex) onGameClick(game.id)

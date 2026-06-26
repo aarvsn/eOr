@@ -18,6 +18,9 @@ interface GameMediaDao {
     @Query("SELECT * FROM game_media WHERE game_id = :gameId")
     fun observeMediaForGame(gameId: Long): Flow<GameMediaEntity?>
 
+    @Query("SELECT * FROM game_media")
+    fun observeAllMedia(): Flow<List<GameMediaEntity>>
+
     @Upsert
     suspend fun upsertMedia(entity: GameMediaEntity)
 

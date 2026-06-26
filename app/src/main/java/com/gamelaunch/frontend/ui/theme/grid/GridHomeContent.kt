@@ -15,11 +15,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.gamelaunch.frontend.domain.model.Game
+import com.gamelaunch.frontend.domain.model.GameMedia
 
 @Composable
 fun GridHomeContent(
     games: List<Game>,
     onGameClick: (Long) -> Unit,
+    mediaForGames: Map<Long, GameMedia> = emptyMap(),
     focusedGameIndex: Int = -1,
     modifier: Modifier = Modifier
 ) {
@@ -52,6 +54,7 @@ fun GridHomeContent(
             val isFocused = index == focusedGameIndex
             GridGameCard(
                 game      = game,
+                media     = mediaForGames[game.id],
                 isFocused = isFocused,
                 onClick   = { onGameClick(game.id) }
             )

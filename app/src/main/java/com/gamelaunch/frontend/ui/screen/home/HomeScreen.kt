@@ -192,6 +192,7 @@ fun HomeScreen(
                     LayoutMode.CAROUSEL -> CarouselHomeContent(
                         games             = state.games,
                         selectedGameMedia = state.selectedGameMedia,
+                        mediaForGames     = state.mediaForGames,
                         selectedIndex     = state.selectedGameIndex,
                         shouldPlayVideo   = state.shouldPlayVideo,
                         videoMuted        = state.videoMuted,
@@ -203,6 +204,7 @@ fun HomeScreen(
                     LayoutMode.GRID -> GridHomeContent(
                         games            = state.games,
                         onGameClick      = onGameClick,
+                        mediaForGames    = state.mediaForGames,
                         focusedGameIndex = gridFocusIndex,
                         modifier         = Modifier
                             .fillMaxSize()

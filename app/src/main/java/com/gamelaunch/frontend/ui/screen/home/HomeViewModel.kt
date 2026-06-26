@@ -28,6 +28,7 @@ data class HomeUiState(
     val games: List<Game> = emptyList(),
     val selectedGameIndex: Int = 0,
     val selectedGameMedia: GameMedia? = null,
+    val mediaForGames: Map<Long, GameMedia> = emptyMap(),
     val shouldPlayVideo: Boolean = false,
     val layoutMode: LayoutMode = LayoutMode.CAROUSEL,
     val videoMuted: Boolean = true,
@@ -50,6 +51,7 @@ class HomeViewModel @Inject constructor(
     init {
         observePlatforms()
         observeSettings()
+        observeAllMedia()
     }
 
     private fun observePlatforms() {
@@ -66,6 +68,20 @@ class HomeViewModel @Inject constructor(
                     )
                 }
                 loadGamesForPlatform(_uiState.value.selectedPlatform)
+            }
+        }
+    }
+
+    private fun observeAllMedia() {
+        viewModelScope.launch {
+            mediaRepository.observeAllMedia().collect { mediaMap ->
+                val selectedGame = _uiState.value.games.getOrNull(_uiState.value.selectedGameIndex)
+                _uiState.update {
+                    it.copy(
+                        mediaForGames     = mediaMap,
+                        selectedGameMedia = selectedGame?.let { g -> mediaMap[g.id] }
+                    )
+                }
             }
         }
     }
@@ -91,14 +107,15 @@ class HomeViewModel @Inject constructor(
         if (platformId == null) return
         gamesJob = viewModelScope.launch {
             gameRepository.getGamesByPlatform(platformId).collect { games ->
+                val firstMedia = _uiState.value.mediaForGames[games.firstOrNull()?.id]
                 _uiState.update { state ->
                     state.copy(
-                        games = games,
+                        games             = games,
                         selectedGameIndex = 0,
-                        shouldPlayVideo = false
+                        shouldPlayVideo   = false,
+                        selectedGameMedia = firstMedia
                     )
                 }
-                if (games.isNotEmpty()) loadMediaForGame(games[0].id)
             }
         }
     }
@@ -114,20 +131,12 @@ class HomeViewModel @Inject constructor(
         if (index !in games.indices) return
 
         videoDelayJob?.cancel()
-        _uiState.update { it.copy(selectedGameIndex = index, shouldPlayVideo = false) }
-
-        loadMediaForGame(games[index].id)
+        val media = _uiState.value.mediaForGames[games[index].id]
+        _uiState.update { it.copy(selectedGameIndex = index, shouldPlayVideo = false, selectedGameMedia = media) }
 
         videoDelayJob = viewModelScope.launch {
             delay(_uiState.value.videoDelayMs)
             _uiState.update { it.copy(shouldPlayVideo = true) }
-        }
-    }
-
-    private fun loadMediaForGame(gameId: Long) {
-        viewModelScope.launch {
-            val media = mediaRepository.getMediaForGame(gameId)
-            _uiState.update { it.copy(selectedGameMedia = media) }
         }
     }
 

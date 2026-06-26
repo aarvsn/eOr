@@ -32,6 +32,9 @@ class MediaRepositoryImpl @Inject constructor(
     override fun observeMediaForGame(gameId: Long): Flow<GameMedia?> =
         gameMediaDao.observeMediaForGame(gameId).map { it?.toDomain() }
 
+    override fun observeAllMedia(): Flow<Map<Long, GameMedia>> =
+        gameMediaDao.observeAllMedia().map { list -> list.associate { it.gameId to it.toDomain() } }
+
     override suspend fun upsertMedia(media: GameMedia) {
         gameMediaDao.upsertMedia(media.toEntity())
     }

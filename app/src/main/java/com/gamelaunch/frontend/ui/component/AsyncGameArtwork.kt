@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -24,10 +25,15 @@ fun AsyncGameArtwork(
     modifier: Modifier = Modifier,
     contentScale: ContentScale = ContentScale.Crop
 ) {
-    val data = when {
-        localPath != null -> File(localPath)
-        remoteUrl != null -> remoteUrl
-        else -> null
+    // Prefer a local file that actually exists; fall back to remote URL
+    val data = remember(localPath, remoteUrl) {
+        val file = localPath?.let { File(it) }
+        when {
+            file != null && file.exists() && file.length() > 0 -> file
+            remoteUrl != null -> remoteUrl
+            file != null -> file  // last resort: let Coil try (shows error if truly missing)
+            else -> null
+        }
     }
 
     SubcomposeAsyncImage(
