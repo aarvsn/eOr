@@ -98,7 +98,6 @@ class ImportEsdeMediaUseCase @Inject constructor(
 
             for (dir in dirs) {
                 boxArt     = boxArt     ?: index[Triple(dir, "box2dfront",   nameKey)]
-                                        ?: index[Triple(dir, "3dboxes",      nameKey)]
                                         ?: index[Triple(dir, "covers",       nameKey)]
                 screenshot = screenshot ?: index[Triple(dir, "screenshots",  nameKey)]
                                         ?: index[Triple(dir, "titlescreens", nameKey)]
