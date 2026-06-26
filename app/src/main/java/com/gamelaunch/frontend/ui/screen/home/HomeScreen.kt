@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.gamelaunch.frontend.ui.component.PlatformTabRow
+import com.gamelaunch.frontend.ui.theme.CyanAccent
 import com.gamelaunch.frontend.ui.theme.ElectricBlue
 import com.gamelaunch.frontend.ui.theme.IceWhite
 import com.gamelaunch.frontend.ui.theme.LayoutMode
@@ -231,18 +232,18 @@ fun HomeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text       = "GAME",
-                        fontSize   = 20.sp,
+                        text       = "e",
+                        fontSize   = 22.sp,
                         fontWeight = FontWeight.ExtraBold,
-                        color      = ElectricBlue,
-                        letterSpacing = 1.sp
+                        color      = CyanAccent,
+                        letterSpacing = 2.sp
                     )
                     Text(
-                        text       = "LAUNCHER",
-                        fontSize   = 20.sp,
+                        text       = "Or",
+                        fontSize   = 22.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color      = IceWhite,
-                        letterSpacing = 1.sp
+                        letterSpacing = 2.sp
                     )
 
                     Spacer(Modifier.weight(1f))
