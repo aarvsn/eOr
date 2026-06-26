@@ -2,10 +2,13 @@ package com.gamelaunch.frontend.ui.screen.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.gamelaunch.frontend.data.db.dao.LaunchBoxDao
 import com.gamelaunch.frontend.domain.model.ScraperConfig
 import com.gamelaunch.frontend.domain.repository.EmulatorRepository
 import com.gamelaunch.frontend.domain.repository.ScraperRepository
 import com.gamelaunch.frontend.domain.repository.SettingsRepository
+import com.gamelaunch.frontend.domain.usecase.LbSyncStatus
+import com.gamelaunch.frontend.domain.usecase.SyncLaunchBoxUseCase
 import com.gamelaunch.frontend.ui.theme.LayoutMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,14 +34,18 @@ data class SettingsUiState(
     val videoDelayMs: Long = 1500L,
     val videoMuted: Boolean = true,
     val emulatorDetecting: Boolean = false,
-    val emulatorDetectResult: String? = null
+    val emulatorDetectResult: String? = null,
+    val lbSyncStatus: LbSyncStatus? = null,
+    val lbGameCount: Int = 0
 )
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val scraperRepository: ScraperRepository,
-    private val emulatorRepository: EmulatorRepository
+    private val emulatorRepository: EmulatorRepository,
+    private val syncLaunchBoxUseCase: SyncLaunchBoxUseCase,
+    private val launchBoxDao: LaunchBoxDao
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -66,7 +73,21 @@ class SettingsViewModel @Inject constructor(
                     videoDelayMs = delay,
                     videoMuted = muted
                 )
-            }.collect { _uiState.value = it }
+            }.collect { newState ->
+                _uiState.update { current ->
+                    newState.copy(
+                        emulatorDetecting = current.emulatorDetecting,
+                        emulatorDetectResult = current.emulatorDetectResult,
+                        lbSyncStatus = current.lbSyncStatus,
+                        lbGameCount = current.lbGameCount
+                    )
+                }
+            }
+        }
+        viewModelScope.launch {
+            launchBoxDao.getGameCount().collect { count ->
+                _uiState.update { it.copy(lbGameCount = count) }
+            }
         }
     }
 
@@ -138,6 +159,20 @@ class SettingsViewModel @Inject constructor(
 
     fun clearEmulatorDetectResult() {
         _uiState.update { it.copy(emulatorDetectResult = null) }
+    }
+
+    fun syncLaunchBox() {
+        if (_uiState.value.lbSyncStatus is LbSyncStatus.Downloading ||
+            _uiState.value.lbSyncStatus is LbSyncStatus.Parsing) return
+        viewModelScope.launch {
+            syncLaunchBoxUseCase().collect { status ->
+                _uiState.update { it.copy(lbSyncStatus = status) }
+            }
+        }
+    }
+
+    fun dismissLbSyncStatus() {
+        _uiState.update { it.copy(lbSyncStatus = null) }
     }
 
     fun finishSetup() {

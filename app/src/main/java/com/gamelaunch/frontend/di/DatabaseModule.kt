@@ -6,6 +6,7 @@ import com.gamelaunch.frontend.data.db.AppDatabase
 import com.gamelaunch.frontend.data.db.dao.EmulatorMappingDao
 import com.gamelaunch.frontend.data.db.dao.GameDao
 import com.gamelaunch.frontend.data.db.dao.GameMediaDao
+import com.gamelaunch.frontend.data.db.dao.LaunchBoxDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -32,4 +33,7 @@ object DatabaseModule {
 
     @Provides
     fun provideEmulatorMappingDao(db: AppDatabase): EmulatorMappingDao = db.emulatorMappingDao()
+
+    @Provides
+    fun provideLaunchBoxDao(db: AppDatabase): LaunchBoxDao = db.launchBoxDao()
 }

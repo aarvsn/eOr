@@ -33,16 +33,15 @@ class ScrapeViewModel @Inject constructor(
     private var scrapeJob: Job? = null
 
     init {
-        viewModelScope.launch {
-            val config = settingsRepository.scraperConfig.firstOrNull()
-            _uiState.update { it.copy(isConfigured = config?.isConfigured == true) }
-        }
+        // Always considered configured — LaunchBox works without credentials
+        _uiState.update { it.copy(isConfigured = true) }
     }
 
     fun startScrape() {
         viewModelScope.launch {
-            val config = settingsRepository.scraperConfig.firstOrNull() ?: return@launch
-            if (!config.isConfigured) return@launch
+            // Config may be empty — ScrapeGameUseCase falls back to LaunchBox if SS not set
+            val config = settingsRepository.scraperConfig.firstOrNull()
+                ?: return@launch
 
             _uiState.update { it.copy(isRunning = true) }
             scrapeJob = launch {

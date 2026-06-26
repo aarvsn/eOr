@@ -27,6 +27,7 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -37,6 +38,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import com.gamelaunch.frontend.domain.usecase.LbSyncStatus
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -269,6 +271,102 @@ fun SettingsScreen(
             SettingsSwitchRow("Screenshots",    state.scrapeScreenshots,   viewModel::setScrapeScreenshots)
             SettingsSwitchRow("Wheel Logos",    state.scrapeWheelLogos,    viewModel::setScrapeWheelLogos)
             SettingsSwitchRow("Video Previews", state.scrapeVideos,        viewModel::setScrapeVideos)
+
+            Spacer(Modifier.height(16.dp))
+            HorizontalDivider()
+            Spacer(Modifier.height(16.dp))
+
+            // ── LaunchBox Artwork DB ───────────────────────────────────────
+            Text("Artwork Database", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Downloads box art and screenshots from LaunchBox. " +
+                "~190 MB one-time download. No account required.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(8.dp))
+
+            val lbSyncing = state.lbSyncStatus is LbSyncStatus.Downloading ||
+                            state.lbSyncStatus is LbSyncStatus.Parsing
+            Button(
+                onClick = { viewModel.syncLaunchBox() },
+                enabled = !lbSyncing,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                if (lbSyncing) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                    Spacer(Modifier.width(8.dp))
+                }
+                Text(if (lbSyncing) "Syncing…" else "Sync Artwork DB")
+            }
+
+            when (val status = state.lbSyncStatus) {
+                is LbSyncStatus.Downloading -> {
+                    Spacer(Modifier.height(6.dp))
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        "Downloading database…",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                is LbSyncStatus.Parsing -> {
+                    Spacer(Modifier.height(6.dp))
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        "Parsing… ${"%,d".format(status.gamesIndexed)} games indexed",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                is LbSyncStatus.Complete -> {
+                    Spacer(Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.Check,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            "Sync complete — ${"%,d".format(status.totalGames)} games",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+                is LbSyncStatus.Error -> {
+                    Spacer(Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            status.message,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+                null -> {
+                    if (state.lbGameCount > 0) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            "${"%,d".format(state.lbGameCount)} games in local database",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
 
             Spacer(Modifier.height(16.dp))
             HorizontalDivider()
