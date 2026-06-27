@@ -1,0 +1,33 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Arcade stick: MAME / Arcade / Neo Geo -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="1.5"
+        android:strokeLineJoin="round"
+        android:pathData="M4.5,15 H19.5 A1,1 0 0,1 20.5,16 V18.5 A1,1 0 0,1 19.5,19.5 H4.5 A1,1 0 0,1 3.5,18.5 V16 A1,1 0 0,1 4.5,15 Z" />
+    <!-- Stick shaft -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M9,15 V9.5" />
+    <!-- Ball top -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="1.5"
+        android:pathData="M9,7.8 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0 Z" />
+    <!-- Buttons -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M15,17.2 m-0.9,0 a0.9,0.9 0 1,0 1.8,0 a0.9,0.9 0 1,0 -1.8,0 Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M17.8,17.2 m-0.9,0 a0.9,0.9 0 1,0 1.8,0 a0.9,0.9 0 1,0 -1.8,0 Z" />
+</vector>

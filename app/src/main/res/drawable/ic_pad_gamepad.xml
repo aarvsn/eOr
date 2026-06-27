@@ -1,0 +1,28 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Modern twin-grip gamepad: SNES/Genesis/PS/Saturn/DC/Switch/N64 etc. -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="1.5"
+        android:strokeLineJoin="round"
+        android:strokeLineCap="round"
+        android:pathData="M7.2,9 H16.8 C18.8,9 20.1,10.4 20.5,12.1 L21.3,15.6 C21.6,17.1 20.6,18.3 19.2,18.3 C18.3,18.3 17.6,17.8 17.2,17 L16.2,15.1 H7.8 L6.8,17 C6.4,17.8 5.7,18.3 4.8,18.3 C3.4,18.3 2.4,17.1 2.7,15.6 L3.5,12.1 C3.9,10.4 5.2,9 7.2,9 Z" />
+    <!-- D-pad -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M6,11.6 V14 M4.8,12.8 H7.2" />
+    <!-- Two face buttons -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M16,11.7 m-0.85,0 a0.85,0.85 0 1,0 1.7,0 a0.85,0.85 0 1,0 -1.7,0 Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M18,13.6 m-0.85,0 a0.85,0.85 0 1,0 1.7,0 a0.85,0.85 0 1,0 -1.7,0 Z" />
+</vector>

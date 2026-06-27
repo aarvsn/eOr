@@ -1,0 +1,31 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Vertical handheld slab: GB / GBC / GBA / NDS / 3DS / PSP -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="1.5"
+        android:strokeLineJoin="round"
+        android:pathData="M8.5,2.8 H15.5 A2,2 0 0,1 17.5,4.8 V19.2 A2,2 0 0,1 15.5,21.2 H8.5 A2,2 0 0,1 6.5,19.2 V4.8 A2,2 0 0,1 8.5,2.8 Z" />
+    <!-- Screen -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="1.3"
+        android:strokeLineJoin="round"
+        android:pathData="M9.2,5.4 H14.8 V11.4 H9.2 Z" />
+    <!-- D-pad -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="1.3"
+        android:strokeLineCap="round"
+        android:pathData="M9.4,14.6 V17 M8.2,15.8 H10.6" />
+    <!-- Button -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M14.4,16 m-0.75,0 a0.75,0.75 0 1,0 1.5,0 a0.75,0.75 0 1,0 -1.5,0 Z" />
+</vector>
