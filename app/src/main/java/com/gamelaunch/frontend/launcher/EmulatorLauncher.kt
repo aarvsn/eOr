@@ -3,7 +3,6 @@ package com.gamelaunch.frontend.launcher
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import androidx.core.content.FileProvider
 import com.gamelaunch.frontend.domain.model.EmulatorMapping
 import com.gamelaunch.frontend.domain.model.Game
 import com.gamelaunch.frontend.domain.repository.EmulatorRepository
@@ -72,31 +71,85 @@ class EmulatorLauncher @Inject constructor(
     }
 
     private fun launchStandalone(game: Game, mapping: EmulatorMapping): Result<Unit> {
+        val pkg  = mapping.packageName
+        val spec = launchSpecs[pkg]
         val file = File(game.romPath)
-        // On Android 7+ (targetSdk >= 24), file:// URIs passed to other apps throw
-        // FileUriExposedException. Use FileProvider to hand out a content:// URI instead.
-        val uri = runCatching {
-            FileProvider.getUriForFile(
-                context,
-                "${context.packageName}.fileprovider",
-                file
-            )
-        }.getOrElse {
-            Uri.fromFile(file)
+
+        // Preferred path: each known emulator has a verified launch recipe (explicit activity +
+        // either a ROM path extra or a file:// data URI).
+        if (spec != null) {
+            val intent = Intent(spec.action).apply {
+                setClassName(pkg, spec.activity)
+                if (spec.romExtraKey != null) {
+                    // ROM handed over as a plain path string — no Uri, nothing to expose.
+                    putExtra(spec.romExtraKey, game.romPath)
+                } else {
+                    setDataAndType(Uri.fromFile(file), spec.mimeType)
+                }
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                mapping.intentExtras.forEach { (k, v) -> putExtra(k, v) }
+            }
+            // If the hard-coded activity name is wrong for this build, fall back to a generic
+            // VIEW intent addressed only by package so the system resolves a handler.
+            return tryStartActivity(intent).recoverCatching {
+                context.startActivity(genericViewIntent(pkg, file, mapping))
+            }
         }
-        val action = mapping.launchAction ?: Intent.ACTION_VIEW
-        val intent = Intent(action, uri).apply {
-            setPackage(mapping.packageName)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+
+        // Unknown emulator: generic VIEW by package.
+        return tryStartActivity(genericViewIntent(pkg, file, mapping))
+    }
+
+    private fun genericViewIntent(pkg: String, file: File, mapping: EmulatorMapping): Intent =
+        Intent(mapping.launchAction ?: Intent.ACTION_VIEW, Uri.fromFile(file)).apply {
+            setPackage(pkg)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             mapping.intentExtras.forEach { (k, v) -> putExtra(k, v) }
         }
-        return tryStartActivity(intent)
-    }
 
     private fun tryStartActivity(intent: Intent): Result<Unit> = runCatching {
         context.startActivity(intent)
     }
+
+    /** How to hand a ROM to a specific standalone emulator (all verified on a Retroid Pocket 4). */
+    private data class LaunchSpec(
+        val activity: String,            // fully-qualified activity to launch explicitly
+        val romExtraKey: String? = null, // pass ROM path via this String extra; else as file:// data
+        val action: String = Intent.ACTION_VIEW,
+        val mimeType: String? = null
+    )
+
+    private val launchSpecs: Map<String, LaunchSpec> = mapOf(
+        // PS1 — DuckStation reads the ROM from a "bootPath" extra, not VIEW data.
+        "com.github.stenzek.duckstation" to
+            LaunchSpec("com.github.stenzek.duckstation.EmulationActivity",
+                       romExtraKey = "bootPath", action = Intent.ACTION_MAIN),
+        // PSP — PPSSPP reads getData().
+        "org.ppsspp.ppsspp"     to LaunchSpec("org.ppsspp.ppsspp.PpssppActivity"),
+        "org.ppsspp.ppssppgold" to LaunchSpec("org.ppsspp.ppsspp.PpssppActivity"),
+        // NDS — melonDS's EmulatorActivity crashes (ConcurrentModificationException) when launched
+        // cold from outside, and the warm-then-launch workaround is blocked by Android's
+        // background-activity-start policy. Open its ROM list instead so it never crashes; the
+        // user taps the game there. (DraStic or a RetroArch DS core give true direct-boot.)
+        "me.magnum.melonds" to LaunchSpec("me.magnum.melonds.ui.romlist.RomListActivity"),
+        // N64 — Mupen64Plus FZ splash screen forwards to GameActivity.
+        "org.mupen64plusae.v3.fzurita"     to LaunchSpec("paulscode.android.mupen64plusae.SplashActivity"),
+        "org.mupen64plusae.v3.fzurita.pro" to LaunchSpec("paulscode.android.mupen64plusae.SplashActivity"),
+        // Dreamcast — Redream only accepts a file:// scheme.
+        "io.recompiled.redream" to LaunchSpec("io.recompiled.redream.MainActivity"),
+        // Saturn — Yaba Sanshiro game activity reads getData().
+        "org.devmiyax.yabasanshioro2"     to LaunchSpec("org.uoyabause.android.Yabause"),
+        "org.devmiyax.yabasanshioro2.pro" to LaunchSpec("org.uoyabause.android.Yabause"),
+        // 3DS — Citra (MMJ) reads the ROM from a "GamePath" extra.
+        "org.citra.emu" to LaunchSpec("org.citra.emu.ui.EmulationActivity",
+                                      romExtraKey = "GamePath", action = Intent.ACTION_MAIN),
+        // Switch — Yuzu-derived emulators expose an EmulationActivity that reads getData().
+        "dev.eden.eden_emulator"  to LaunchSpec("org.yuzu.yuzu_emu.activities.EmulationActivity"),
+        "dev.eden.emulator"       to LaunchSpec("org.yuzu.yuzu_emu.activities.EmulationActivity"),
+        "org.yuzu.yuzu_emu"       to LaunchSpec("org.yuzu.yuzu_emu.activities.EmulationActivity"),
+        "org.sudachi.sudachi_emu" to LaunchSpec("org.sudachi.sudachi_emu.activities.EmulationActivity"),
+    )
 }
 
 class NoEmulatorConfiguredException(platformId: String) :
