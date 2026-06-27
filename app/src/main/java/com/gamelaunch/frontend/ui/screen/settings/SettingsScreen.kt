@@ -261,8 +261,8 @@ fun SettingsScreen(
 
             Spacer(Modifier.height(4.dp))
 
-            // ── ES-DE Media Folder ─────────────────────────────────────────
-            SettingsSectionHeader("ES-DE Media Folder")
+            // ── Media Import ───────────────────────────────────────────────
+            SettingsSectionHeader("Media Import")
             SettingsCard {
                 Text(
                     "Point to your ES-DE downloaded_media folder to use art & videos you already scraped.",
