@@ -3,6 +3,7 @@ package com.gamelaunch.frontend.launcher
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.core.content.FileProvider
 import com.gamelaunch.frontend.domain.model.EmulatorMapping
 import com.gamelaunch.frontend.domain.model.Game
 import com.gamelaunch.frontend.domain.repository.EmulatorRepository
@@ -43,12 +44,24 @@ class EmulatorLauncher @Inject constructor(
 
     private fun launchStandalone(game: Game, mapping: EmulatorMapping): Result<Unit> {
         val file = File(game.romPath)
-        val uri = Uri.fromFile(file)
+        // On Android 7+ (targetSdk >= 24), file:// URIs passed to other apps throw
+        // FileUriExposedException. Use FileProvider to hand out a content:// URI instead.
+        val uri = runCatching {
+            FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                file
+            )
+        }.getOrElse {
+            // Fallback for edge cases where FileProvider can't resolve the path
+            Uri.fromFile(file)
+        }
         val action = mapping.launchAction ?: Intent.ACTION_VIEW
         val intent = Intent(action, uri).apply {
             setPackage(mapping.packageName)
-            mapping.intentExtras.forEach { (k, v) -> putExtra(k, v) }
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            mapping.intentExtras.forEach { (k, v) -> putExtra(k, v) }
         }
         return tryStartActivity(intent)
     }
