@@ -15,11 +15,20 @@ import javax.inject.Singleton
 @Singleton
 class EmulatorLauncher @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val emulatorRepository: EmulatorRepository
+    private val emulatorRepository: EmulatorRepository,
+    private val packageManagerHelper: PackageManagerHelper
 ) {
     suspend fun launch(game: Game): Result<Unit> {
-        val mapping = emulatorRepository.getMappingForPlatform(game.platformId)
+        var mapping = emulatorRepository.getMappingForPlatform(game.platformId)
             ?: return Result.failure(NoEmulatorConfiguredException(game.platformId))
+
+        // If the saved package is no longer installed (e.g. stale DB after package name fix),
+        // run auto-detect once to update the mapping before trying to launch.
+        if (!packageManagerHelper.isPackageInstalled(mapping.packageName)) {
+            emulatorRepository.autoDetectAndAssign()
+            mapping = emulatorRepository.getMappingForPlatform(game.platformId)
+                ?: return Result.failure(NoEmulatorConfiguredException(game.platformId))
+        }
 
         return if (mapping.isRetroArch) {
             launchRetroArch(game, mapping)
@@ -53,7 +62,6 @@ class EmulatorLauncher @Inject constructor(
                 file
             )
         }.getOrElse {
-            // Fallback for edge cases where FileProvider can't resolve the path
             Uri.fromFile(file)
         }
         val action = mapping.launchAction ?: Intent.ACTION_VIEW
