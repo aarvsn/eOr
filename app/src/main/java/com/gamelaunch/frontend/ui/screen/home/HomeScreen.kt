@@ -277,12 +277,14 @@ fun HomeScreen(
 
                         state.topTab == TopTab.GAMES && !state.gameViewActive ->
                             SystemSelectionContent(
-                                platforms     = state.platforms,
-                                counts        = state.platformCounts,
-                                focusedIndex  = systemFocusIndex,
-                                layoutMode    = state.layoutMode,
-                                onSystemClick = { gridFocusIndex = 0; viewModel.enterSystem(it) },
-                                modifier      = Modifier.fillMaxSize()
+                                platforms       = state.platforms,
+                                counts          = state.platformCounts,
+                                focusedIndex    = systemFocusIndex,
+                                layoutMode      = state.layoutMode,
+                                previewArt      = state.systemPreviewArt,
+                                onSystemFocused = viewModel::focusSystem,
+                                onSystemClick   = { gridFocusIndex = 0; viewModel.enterSystem(it) },
+                                modifier        = Modifier.fillMaxSize()
                             )
 
                         state.topTab == TopTab.GAMES -> when (state.layoutMode) {

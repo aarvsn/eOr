@@ -28,6 +28,7 @@ data class HomeUiState(
     val gameViewActive: Boolean = false,      // Games tab: false = system grid, true = game UI
     val platforms: List<String> = emptyList(),
     val platformCounts: Map<String, Int> = emptyMap(),
+    val systemPreviewArt: List<String> = emptyList(),  // box art for the focused system card
     val selectedPlatform: String? = null,
     val games: List<Game> = emptyList(),
     val selectedGameIndex: Int = 0,
@@ -84,6 +85,17 @@ class HomeViewModel @Inject constructor(
 
     fun selectTopTab(tab: TopTab) {
         _uiState.update { it.copy(topTab = tab) }
+    }
+
+    private var previewJob: Job? = null
+
+    /** Load a handful of box-art covers to preview the system the carousel is focused on. */
+    fun focusSystem(platformId: String) {
+        previewJob?.cancel()
+        previewJob = viewModelScope.launch {
+            val art = mediaRepository.boxArtSampleForPlatform(platformId, 8)
+            _uiState.update { it.copy(systemPreviewArt = art) }
+        }
     }
 
     /** Games tab: open a system's game UI. */

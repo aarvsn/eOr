@@ -35,6 +35,9 @@ class MediaRepositoryImpl @Inject constructor(
     override fun observeAllMedia(): Flow<Map<Long, GameMedia>> =
         gameMediaDao.observeAllMedia().map { list -> list.associate { it.gameId to it.toDomain() } }
 
+    override suspend fun boxArtSampleForPlatform(platformId: String, limit: Int): List<String> =
+        gameMediaDao.getBoxArtSampleForPlatform(platformId, limit)
+
     override suspend fun upsertMedia(media: GameMedia) {
         // @Upsert matches on the primary key `id`, not the unique game_id index. A fresh
         // GameMedia has id = 0, so for a game that already has a media row the insert would

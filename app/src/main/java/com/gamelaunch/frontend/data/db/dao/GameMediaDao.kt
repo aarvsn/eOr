@@ -21,6 +21,15 @@ interface GameMediaDao {
     @Query("SELECT * FROM game_media")
     fun observeAllMedia(): Flow<List<GameMediaEntity>>
 
+    @Query("""
+        SELECT COALESCE(m.box_art_local, m.box_art_remote) FROM game_media m
+        JOIN games g ON g.id = m.game_id
+        WHERE g.platform_id = :platformId
+          AND (m.box_art_local IS NOT NULL OR m.box_art_remote IS NOT NULL)
+        ORDER BY g.title ASC LIMIT :limit
+    """)
+    suspend fun getBoxArtSampleForPlatform(platformId: String, limit: Int): List<String>
+
     @Upsert
     suspend fun upsertMedia(entity: GameMediaEntity)
 

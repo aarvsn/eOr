@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -30,12 +32,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.gamelaunch.frontend.ui.component.AsyncGameArtwork
 import com.gamelaunch.frontend.ui.component.platformDisplayName
 import com.gamelaunch.frontend.ui.component.platformPadIcon
 import com.gamelaunch.frontend.ui.theme.BounceDurationMs
@@ -52,18 +57,20 @@ fun SystemSelectionContent(
     counts: Map<String, Int>,
     focusedIndex: Int,
     layoutMode: LayoutMode,
+    previewArt: List<String> = emptyList(),
+    onSystemFocused: (String) -> Unit = {},
     onSystemClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     if (platforms.isEmpty()) {
         Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No systems configured", color = Color.White.copy(alpha = 0.7f))
+            Text("No systems configured", color = TileSub)
         }
         return
     }
 
     if (layoutMode == LayoutMode.CAROUSEL)
-        SystemCarousel(platforms, counts, focusedIndex, onSystemClick, modifier)
+        SystemCarousel(platforms, counts, focusedIndex, previewArt, onSystemFocused, onSystemClick, modifier)
     else
         SystemGrid(platforms, counts, focusedIndex, onSystemClick, modifier)
 }
@@ -106,9 +113,16 @@ private fun SystemCarousel(
     platforms: List<String>,
     counts: Map<String, Int>,
     focusedIndex: Int,
+    previewArt: List<String>,
+    onSystemFocused: (String) -> Unit,
     onSystemClick: (String) -> Unit,
     modifier: Modifier
 ) {
+    val focused = platforms.getOrNull(focusedIndex)
+
+    // Load the preview covers for whichever system is focused.
+    LaunchedEffect(focusedIndex) { focused?.let(onSystemFocused) }
+
     val listState = rememberLazyListState()
     LaunchedEffect(focusedIndex) {
         if (focusedIndex !in platforms.indices) return@LaunchedEffect
@@ -120,12 +134,60 @@ private fun SystemCarousel(
         listState.animateScrollToItem(focusedIndex, -center)
     }
 
-    Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Column(modifier.fillMaxSize()) {
+
+        // ── Preview area (top) — a shelf of box art from the focused system ──
+        Column(
+            modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            focused?.let {
+                Text(
+                    platformDisplayName(it),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = TileText
+                )
+                Spacer(Modifier.height(2.dp))
+                Text("${counts[it] ?: 0} games", style = MaterialTheme.typography.labelMedium, color = TileSub)
+                Spacer(Modifier.height(18.dp))
+            }
+            if (previewArt.isEmpty()) {
+                Icon(
+                    painter = painterResource(platformPadIcon(focused ?: "")),
+                    contentDescription = null,
+                    tint = TileSub.copy(alpha = 0.4f),
+                    modifier = Modifier.size(96.dp)
+                )
+            } else {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    previewArt.take(5).forEach { art ->
+                        AsyncGameArtwork(
+                            localPath = art,
+                            remoteUrl = art,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .height(168.dp)
+                                .aspectRatio(0.72f)
+                                .shadow(10.dp, RoundedCornerShape(10.dp))
+                                .clip(RoundedCornerShape(10.dp))
+                        )
+                    }
+                }
+            }
+        }
+
+        // ── System carousel (bottom) — smaller cards ──
         LazyRow(
             state = listState,
             contentPadding = PaddingValues(horizontal = 24.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth().padding(bottom = 22.dp)
         ) {
             itemsIndexed(platforms, key = { _, id -> id }) { index, platformId ->
                 SystemCard(
@@ -133,8 +195,8 @@ private fun SystemCarousel(
                     count = counts[platformId] ?: 0,
                     isFocused = index == focusedIndex,
                     color = tileColor(index),
-                    modifier = Modifier.width(210.dp).height(210.dp),
-                    iconSize = 64,
+                    modifier = Modifier.width(132.dp).height(132.dp),
+                    iconSize = 38,
                     onClick = { onSystemClick(platformId) }
                 )
             }
