@@ -14,6 +14,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.dp
 
 // ── Light, playful liquid-glass + 3DS palette ───────────────────────────────
@@ -63,39 +64,37 @@ fun AmbientBackground(
 }
 
 /**
- * Colourful frosted-glass tile: a translucent tinted fill that lets the light base soften it to a
- * pastel, a bright specular highlight along the top edge, and a soft floating shadow (tinted when
- * focused). Focused tiles turn vivid and lift, 3DS-style.
+ * Colourful glass tile: a solid colour fill with a soft top-to-bottom sheen, a thin bright edge
+ * highlight and a soft floating shadow (colour-tinted when focused). Unselected tiles use a light
+ * pastel shade; focused tiles deepen to the full colour and lift, 3DS-style. The fill is opaque so
+ * the shadow never bleeds through.
  */
 fun Modifier.glassTile(
     shape: Shape,
     color: Color,
     selected: Boolean = false
-): Modifier = this
-    .shadow(
-        elevation = if (selected) 16.dp else 6.dp,
-        shape = shape,
-        ambientColor = if (selected) color else Color(0xFF2A3550),
-        spotColor = if (selected) color else Color(0xFF2A3550),
-        clip = false
-    )
-    .clip(shape)
-    .background(
-        Brush.verticalGradient(
-            if (selected) listOf(color.copy(alpha = 0.95f), color.copy(alpha = 0.70f))
-            else listOf(color.copy(alpha = 0.60f), color.copy(alpha = 0.38f))
+): Modifier {
+    val base = if (selected) color else lerp(color, Color.White, 0.5f)
+    return this
+        .shadow(
+            elevation = if (selected) 18.dp else 7.dp,
+            shape = shape,
+            ambientColor = if (selected) color else Color(0xFF2A3550),
+            spotColor = if (selected) color else Color(0xFF2A3550),
+            clip = false
         )
-    )
-    .border(
-        width = if (selected) 1.5.dp else 1.dp,
-        brush = Brush.verticalGradient(
-            listOf(
-                Color.White.copy(alpha = if (selected) 0.9f else 0.75f),
-                Color.White.copy(alpha = if (selected) 0.25f else 0.15f)
-            )
-        ),
-        shape = shape
-    )
+        .clip(shape)
+        .background(
+            Brush.verticalGradient(listOf(lerp(base, Color.White, 0.18f), base))
+        )
+        .border(
+            width = 1.dp,
+            brush = Brush.verticalGradient(
+                listOf(Color.White.copy(alpha = 0.5f), Color.White.copy(alpha = 0.1f))
+            ),
+            shape = shape
+        )
+}
 
 /**
  * Neutral frosted chip for tabs and icon buttons. Frosted white by default; an accent fill when

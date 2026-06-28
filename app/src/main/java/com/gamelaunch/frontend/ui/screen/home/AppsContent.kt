@@ -1,5 +1,6 @@
 package com.gamelaunch.frontend.ui.screen.home
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,8 +22,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -92,11 +95,13 @@ private fun AppCard(
     onClick: () -> Unit
 ) {
     val shape = RoundedCornerShape(20.dp)
+    val scale by animateFloatAsState(if (isFocused) 1.07f else 1f, label = "appTileScale")
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxWidth()
+            .graphicsLayer { scaleX = scale; scaleY = scale }
             .glassTile(shape, color = color, selected = isFocused)
             .clickable(onClick = onClick)
             .padding(vertical = 14.dp, horizontal = 8.dp)

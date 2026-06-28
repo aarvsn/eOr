@@ -1,5 +1,6 @@
 package com.gamelaunch.frontend.ui.screen.home
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,9 +26,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -147,11 +150,13 @@ private fun SystemCard(
     iconSize: Int = 44
 ) {
     val shape = RoundedCornerShape(24.dp)
+    val scale by animateFloatAsState(if (isFocused) 1.06f else 1f, label = "systemTileScale")
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
         modifier = modifier
+            .graphicsLayer { scaleX = scale; scaleY = scale }
             .glassTile(shape, color = color, selected = isFocused)
             .clickable(onClick = onClick)
             .padding(14.dp)
