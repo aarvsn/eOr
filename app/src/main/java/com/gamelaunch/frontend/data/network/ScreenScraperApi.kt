@@ -16,13 +16,14 @@ interface ScreenScraperApi {
         @Query("ssid") ssId: String,
         @Query("sspassword") ssPassword: String,
         @Query("systemeid") systemId: Int,
-        @Query("romname") romName: String,
+        @Query("romnom") romName: String,
+        @Query("romtype") romType: String = "rom",
         @Query("md5") md5: String? = null,
         @Query("crc") crc: String? = null,
         @Query("output") output: String = "json"
     ): Response<ScraperResponseDto>
 
-    @GET("userInfos.php")
+    @GET("ssuserInfos.php")
     suspend fun validateCredentials(
         @Query("devid") devId: String,
         @Query("devpassword") devPassword: String,

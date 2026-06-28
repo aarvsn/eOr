@@ -1,6 +1,5 @@
 package com.gamelaunch.frontend.domain.usecase
 
-import com.gamelaunch.frontend.data.repository.GameNotFoundException
 import com.gamelaunch.frontend.data.repository.RateLimitException
 import com.gamelaunch.frontend.domain.model.Game
 import com.gamelaunch.frontend.domain.model.GameMedia
@@ -21,6 +20,7 @@ sealed class ScrapeResult {
 class ScrapeGameUseCase @Inject constructor(
     private val scraperRepository: ScraperRepository,
     private val scrapeLaunchBoxUseCase: ScrapeLaunchBoxUseCase,
+    private val libretroThumbnailScraper: LibretroThumbnailScraper,
     private val gameRepository: GameRepository,
     private val mediaRepository: MediaRepository
 ) {
@@ -28,8 +28,8 @@ class ScrapeGameUseCase @Inject constructor(
         val platform = PlatformDefinitions.byId[game.platformId]
             ?: return ScrapeResult.Error(game.id, IllegalArgumentException("Unknown platform: ${game.platformId}"))
 
-        // ── ScreenScraper ────────────────────────────────────────────────
-        if (config.isConfigured) {
+        // ── ScreenScraper (only when both dev + user credentials are present) ──
+        if (config.isConfigured && config.devid.isNotBlank() && config.devpassword.isNotBlank()) {
             val ssResult = scraperRepository.scrapeGame(
                 config   = config,
                 systemId = platform.scraperSystemId,
@@ -67,13 +67,32 @@ class ScrapeGameUseCase @Inject constructor(
                 return ScrapeResult.Success(game.id)
             }
 
-            ssResult.exceptionOrNull()?.let { e ->
-                when (e) {
-                    is RateLimitException -> return ScrapeResult.RateLimited(game.id)
-                    // On NotFound or generic error fall through to LaunchBox
-                    !is GameNotFoundException -> return ScrapeResult.Error(game.id, e)
-                }
-            }
+            // Only a rate-limit stops the batch; any other ScreenScraper failure
+            // (incl. bad/missing creds or "not found") falls through to the free sources.
+            if (ssResult.exceptionOrNull() is RateLimitException) return ScrapeResult.RateLimited(game.id)
+        }
+
+        // ── libretro thumbnails (no credentials — box art + screenshot + title) ──
+        val thumbs = runCatching {
+            libretroThumbnailScraper.fetch(game.romFilename, game.platformId)
+        }.getOrNull()
+
+        if (thumbs != null) {
+            val media = GameMedia(
+                gameId              = game.id,
+                boxArtRemoteUrl     = thumbs.boxArt,
+                screenshotRemoteUrl = thumbs.screenshot,
+                scraperTimestampMs  = System.currentTimeMillis()
+            )
+            mediaRepository.upsertMedia(media)
+            mediaRepository.downloadAndCacheBoxArt(game.id, thumbs.boxArt)
+            runCatching { mediaRepository.downloadAndCacheScreenshot(game.id, thumbs.screenshot) }
+            // Mark scraped so we don't re-fetch every run, keeping the existing title.
+            gameRepository.updateScrapedMetadata(
+                gameId = game.id, scraperGameId = null, title = game.title,
+                description = null, genre = null, releaseYear = null, rating = null
+            )
+            return ScrapeResult.Success(game.id)
         }
 
         // ── LaunchBox fallback ───────────────────────────────────────────
