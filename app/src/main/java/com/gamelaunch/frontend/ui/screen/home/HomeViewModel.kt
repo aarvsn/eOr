@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gamelaunch.frontend.domain.model.Game
 import com.gamelaunch.frontend.domain.model.GameMedia
-import com.gamelaunch.frontend.domain.platform.PlatformDefinitions
 import com.gamelaunch.frontend.domain.repository.GameRepository
 import com.gamelaunch.frontend.domain.repository.MediaRepository
 import com.gamelaunch.frontend.domain.repository.SettingsRepository
@@ -22,8 +21,13 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+enum class TopTab { GAMES, APPS, RETROACHIEVEMENTS }
+
 data class HomeUiState(
+    val topTab: TopTab = TopTab.GAMES,
+    val gameViewActive: Boolean = false,      // Games tab: false = system grid, true = game UI
     val platforms: List<String> = emptyList(),
+    val platformCounts: Map<String, Int> = emptyMap(),
     val selectedPlatform: String? = null,
     val games: List<Game> = emptyList(),
     val selectedGameIndex: Int = 0,
@@ -50,6 +54,7 @@ class HomeViewModel @Inject constructor(
 
     init {
         observePlatforms()
+        observePlatformCounts()
         observeSettings()
         observeAllMedia()
     }
@@ -57,9 +62,6 @@ class HomeViewModel @Inject constructor(
     private fun observePlatforms() {
         viewModelScope.launch {
             gameRepository.getDistinctPlatformIds().collect { platformIds ->
-                val displayNames = platformIds.map { id ->
-                    PlatformDefinitions.byId[id]?.displayName ?: id.uppercase()
-                }
                 _uiState.update { state ->
                     state.copy(
                         platforms = platformIds,
@@ -70,6 +72,30 @@ class HomeViewModel @Inject constructor(
                 loadGamesForPlatform(_uiState.value.selectedPlatform)
             }
         }
+    }
+
+    private fun observePlatformCounts() {
+        viewModelScope.launch {
+            gameRepository.getPlatformCounts().collect { counts ->
+                _uiState.update { it.copy(platformCounts = counts) }
+            }
+        }
+    }
+
+    fun selectTopTab(tab: TopTab) {
+        _uiState.update { it.copy(topTab = tab) }
+    }
+
+    /** Games tab: open a system's game UI. */
+    fun enterSystem(platformId: String) {
+        selectPlatform(platformId)
+        _uiState.update { it.copy(gameViewActive = true) }
+    }
+
+    /** Games tab: return from the game UI to the system grid. */
+    fun exitToSystems() {
+        videoDelayJob?.cancel()
+        _uiState.update { it.copy(gameViewActive = false, shouldPlayVideo = false) }
     }
 
     private fun observeAllMedia() {

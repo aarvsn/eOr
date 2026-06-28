@@ -11,6 +11,7 @@ interface GameRepository {
     fun getFavorites(): Flow<List<Game>>
     fun getRecentlyPlayed(limit: Int = 20): Flow<List<Game>>
     fun getDistinctPlatformIds(): Flow<List<String>>
+    fun getPlatformCounts(): Flow<Map<String, Int>>
     suspend fun insertGame(game: Game): Long
     suspend fun insertGames(games: List<Game>)
     suspend fun updateGame(game: Game)

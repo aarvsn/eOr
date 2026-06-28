@@ -8,6 +8,8 @@ import androidx.room.Update
 import com.gamelaunch.frontend.data.db.entity.GameEntity
 import kotlinx.coroutines.flow.Flow
 
+data class PlatformCount(val platformId: String, val count: Int)
+
 @Dao
 interface GameDao {
 
@@ -31,6 +33,9 @@ interface GameDao {
 
     @Query("SELECT DISTINCT platform_id FROM games ORDER BY platform_id ASC")
     fun getDistinctPlatformIds(): Flow<List<String>>
+
+    @Query("SELECT platform_id AS platformId, COUNT(*) AS count FROM games GROUP BY platform_id")
+    fun getPlatformCounts(): Flow<List<PlatformCount>>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertGame(entity: GameEntity): Long

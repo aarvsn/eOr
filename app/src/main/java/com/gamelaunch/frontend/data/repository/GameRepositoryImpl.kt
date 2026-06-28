@@ -35,6 +35,9 @@ class GameRepositoryImpl @Inject constructor(
     override fun getDistinctPlatformIds(): Flow<List<String>> =
         gameDao.getDistinctPlatformIds()
 
+    override fun getPlatformCounts(): Flow<Map<String, Int>> =
+        gameDao.getPlatformCounts().map { rows -> rows.associate { it.platformId to it.count } }
+
     override suspend fun insertGame(game: Game): Long =
         gameDao.insertGame(game.toEntity())
 
