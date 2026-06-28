@@ -83,7 +83,17 @@ class PackageManagerHelper @Inject constructor(
         "saturn"    to listOf("org.devmiyax.yabasanshioro2.pro", "org.devmiyax.yabasanshioro2", "com.retroarch.aarch64", "org.libretro.retroarch"),
         "32x"       to listOf("com.retroarch.aarch64", "org.libretro.retroarch"),
         "atari2600" to listOf("com.retroarch.aarch64", "org.libretro.retroarch"),
-        "mame"      to listOf("com.retroarch.aarch64", "org.libretro.retroarch")
+        "mame"      to listOf("com.retroarch.aarch64", "org.libretro.retroarch"),
+        "fbneo"     to listOf("com.retroarch.aarch64", "org.libretro.retroarch"),
+        "neogeo"    to listOf("com.retroarch.aarch64", "org.libretro.retroarch"),
+        "ngp"       to listOf("com.retroarch.aarch64", "org.libretro.retroarch"),
+        "pcengine"  to listOf("com.retroarch.aarch64", "org.libretro.retroarch"),
+        "segacd"    to listOf("com.retroarch.aarch64", "org.libretro.retroarch"),
+        "3do"       to listOf("com.retroarch.aarch64", "org.libretro.retroarch"),
+        "gc"        to listOf("org.dolphinemu.dolphinemu", "com.retroarch.aarch64", "org.libretro.retroarch"),
+        "wii"       to listOf("org.dolphinemu.dolphinemu", "com.retroarch.aarch64", "org.libretro.retroarch"),
+        "wiiu"      to listOf("info.cemu.cemu", "com.retroarch.aarch64", "org.libretro.retroarch"),
+        "psvita"    to listOf("org.vita3k.emulator")
     )
 
     fun getInstalledEmulators(): List<InstalledEmulator> {

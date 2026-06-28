@@ -11,7 +11,7 @@ class PlatformDetector @Inject constructor() {
     // Extensions used by lots of non-game data files (saves, dumps, disc tracks, system files).
     // For these we never trust the extension alone — the file must live inside a recognised
     // platform folder AND the extension must be valid for that platform.
-    private val ambiguousExtensions = setOf(".bin", ".iso", ".img", ".chd", ".cso", ".cue")
+    private val ambiguousExtensions = setOf(".bin", ".iso", ".img", ".chd", ".cso", ".cue", ".zip", ".7z")
 
     fun detect(file: File, parentFolderName: String): Platform? {
         val ext = ".${file.extension.lowercase()}"

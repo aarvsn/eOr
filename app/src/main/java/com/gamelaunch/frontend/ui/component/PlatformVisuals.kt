@@ -121,6 +121,7 @@ private val platformIconAlias: Map<String, String> = mapOf(
     "ps1" to "ps", "psx" to "ps",
     "atari2600" to "atari",
     "gamecube" to "ngc", "gc" to "ngc",
+    "fbneo" to "arcade",
     "neogeocd" to "neocd",
     "pcengine" to "pce", "tg16" to "pce",
     "pcenginecd" to "pcecd",

@@ -24,7 +24,8 @@ class ScanRomsUseCase @Inject constructor(
     private val platformDetector: PlatformDetector
 ) {
     private val skipExtensions = setOf(
-        ".txt", ".xml", ".cue", ".nfo", ".jpg", ".png", ".mp4", ".zip", ".7z", ".rar"
+        ".txt", ".xml", ".cue", ".nfo", ".jpg", ".png", ".mp4", ".rar",
+        ".sav", ".srm", ".state", ".m3u"
     )
 
     // Emulator data sub-folders (saves, shaders, system files…) that hold no ROMs. Pruning

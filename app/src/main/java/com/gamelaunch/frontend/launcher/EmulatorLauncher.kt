@@ -91,15 +91,20 @@ class EmulatorLauncher @Inject constructor(
                 mapping.intentExtras.forEach { (k, v) -> putExtra(k, v) }
             }
             // If the hard-coded activity name is wrong for this build, fall back to a generic
-            // VIEW intent addressed only by package so the system resolves a handler.
-            return tryStartActivity(intent).recoverCatching {
-                context.startActivity(genericViewIntent(pkg, file, mapping))
-            }
+            // VIEW intent, and finally to just opening the emulator's own game list.
+            return tryStartActivity(intent)
+                .recoverCatching { context.startActivity(genericViewIntent(pkg, file, mapping)) }
+                .recoverCatching { context.startActivity(openAppIntent(pkg) ?: throw it) }
         }
 
-        // Unknown emulator: generic VIEW by package.
+        // Unknown emulator: generic VIEW by package, else just open the emulator.
         return tryStartActivity(genericViewIntent(pkg, file, mapping))
+            .recoverCatching { context.startActivity(openAppIntent(pkg) ?: throw it) }
     }
+
+    /** Last-resort: open the emulator's own UI (its game list) when it can't be booted directly. */
+    private fun openAppIntent(pkg: String): Intent? =
+        context.packageManager.getLaunchIntentForPackage(pkg)?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
     private fun genericViewIntent(pkg: String, file: File, mapping: EmulatorMapping): Intent =
         Intent(mapping.launchAction ?: Intent.ACTION_VIEW, Uri.fromFile(file)).apply {

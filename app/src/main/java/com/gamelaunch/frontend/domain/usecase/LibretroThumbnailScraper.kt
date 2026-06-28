@@ -74,6 +74,16 @@ class LibretroThumbnailScraper @Inject constructor(
             "ps2"       to "Sony - PlayStation 2",
             "psp"       to "Sony - PlayStation Portable",
             "atari2600" to "Atari - 2600",
+            "gc"        to "Nintendo - GameCube",
+            "wii"       to "Nintendo - Wii",
+            "wiiu"      to "Nintendo - Wii U",
+            "neogeo"    to "SNK - Neo Geo",
+            "fbneo"     to "FBNeo - Arcade Games",
+            "mame"      to "MAME",
+            "ngp"       to "SNK - Neo Geo Pocket Color",
+            "pcengine"  to "NEC - PC Engine - TurboGrafx 16",
+            "segacd"    to "Sega - Mega-CD - Sega CD",
+            "3do"       to "The 3DO Company - 3DO",
         )
     }
 }
