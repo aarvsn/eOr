@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -49,13 +49,12 @@ fun GridHomeContent(
         verticalArrangement   = Arrangement.spacedBy(8.dp),
         modifier              = modifier
     ) {
-        items(games, key = { it.id }) { game ->
-            val index     = games.indexOf(game)
-            val isFocused = index == focusedGameIndex
+        itemsIndexed(games, key = { _, g -> g.id }) { index, game ->
             GridGameCard(
                 game      = game,
+                index     = index,
                 media     = mediaForGames[game.id],
-                isFocused = isFocused,
+                isFocused = index == focusedGameIndex,
                 onClick   = { onGameClick(game.id) }
             )
         }

@@ -16,9 +16,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.ViewCarousel
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -62,8 +60,6 @@ import com.gamelaunch.frontend.ui.theme.LightBg
 import com.gamelaunch.frontend.ui.theme.TileSub
 import com.gamelaunch.frontend.ui.theme.TileText
 import com.gamelaunch.frontend.ui.theme.glassChip
-import com.gamelaunch.frontend.ui.theme.LayoutMode
-import com.gamelaunch.frontend.ui.theme.carousel.CarouselHomeContent
 import com.gamelaunch.frontend.ui.theme.grid.GridHomeContent
 
 @Composable
@@ -83,7 +79,6 @@ fun HomeScreen(
 
     val screenWidthDp   = LocalConfiguration.current.screenWidthDp
     val gameGridColumns = maxOf(2, screenWidthDp / 110)
-    val systemColumns   = maxOf(2, screenWidthDp / 150)
     val appColumns      = maxOf(2, screenWidthDp / 96)
 
     // Keep focus in bounds when lists change
@@ -138,13 +133,10 @@ fun HomeScreen(
                     when (state.topTab) {
                         // ══ GAMES ════════════════════════════════════════
                         TopTab.GAMES -> if (!state.gameViewActive) {
-                            // System-selection: carousel = left/right, grid = 2D navigation
-                            val carousel = state.layoutMode == LayoutMode.CAROUSEL
+                            // System carousel — left/right only
                             when (event.key) {
                                 Key.DirectionLeft  -> { systemFocusIndex = (systemFocusIndex - 1).coerceAtLeast(0); true }
                                 Key.DirectionRight -> { systemFocusIndex = (systemFocusIndex + 1).coerceAtMost(state.platforms.size - 1); true }
-                                Key.DirectionUp    -> { if (!carousel) (systemFocusIndex - systemColumns).let { if (it >= 0) systemFocusIndex = it }; true }
-                                Key.DirectionDown  -> { if (!carousel) (systemFocusIndex + systemColumns).let { if (it < state.platforms.size) systemFocusIndex = it }; true }
                                 GamepadA, Key.DirectionCenter, Key.Enter -> {
                                     state.platforms.getOrNull(systemFocusIndex)?.let {
                                         gridFocusIndex = 0
@@ -154,35 +146,14 @@ fun HomeScreen(
                                 else -> false
                             }
                         } else {
-                            // Game UI (carousel / grid)
+                            // Game grid — 2D navigation
                             when (event.key) {
-                                Key.DirectionLeft -> {
-                                    if (state.layoutMode == LayoutMode.CAROUSEL)
-                                        viewModel.onGameSelected((state.selectedGameIndex - 1).coerceAtLeast(0))
-                                    else gridFocusIndex = (gridFocusIndex - 1).coerceAtLeast(0)
-                                    true
-                                }
-                                Key.DirectionRight -> {
-                                    if (state.layoutMode == LayoutMode.CAROUSEL)
-                                        viewModel.onGameSelected((state.selectedGameIndex + 1).coerceAtMost(state.games.size - 1))
-                                    else gridFocusIndex = (gridFocusIndex + 1).coerceAtMost(state.games.size - 1)
-                                    true
-                                }
-                                Key.DirectionUp -> {
-                                    if (state.layoutMode == LayoutMode.GRID)
-                                        (gridFocusIndex - gameGridColumns).let { if (it >= 0) gridFocusIndex = it }
-                                    else cyclePlatform(-1)
-                                    true
-                                }
-                                Key.DirectionDown -> {
-                                    if (state.layoutMode == LayoutMode.GRID)
-                                        (gridFocusIndex + gameGridColumns).let { if (it < state.games.size) gridFocusIndex = it }
-                                    else cyclePlatform(+1)
-                                    true
-                                }
+                                Key.DirectionLeft  -> { gridFocusIndex = (gridFocusIndex - 1).coerceAtLeast(0); true }
+                                Key.DirectionRight -> { gridFocusIndex = (gridFocusIndex + 1).coerceAtMost(state.games.size - 1); true }
+                                Key.DirectionUp    -> { (gridFocusIndex - gameGridColumns).let { if (it >= 0) gridFocusIndex = it }; true }
+                                Key.DirectionDown  -> { (gridFocusIndex + gameGridColumns).let { if (it < state.games.size) gridFocusIndex = it }; true }
                                 GamepadA, Key.DirectionCenter, Key.Enter -> {
-                                    val idx = if (state.layoutMode == LayoutMode.CAROUSEL) state.selectedGameIndex else gridFocusIndex
-                                    state.games.getOrNull(idx)?.let { onGameClick(it.id) }; true
+                                    state.games.getOrNull(gridFocusIndex)?.let { onGameClick(it.id) }; true
                                 }
                                 GamepadL1 -> { cyclePlatform(-1); true }
                                 GamepadR1 -> { cyclePlatform(+1); true }
@@ -237,21 +208,9 @@ fun HomeScreen(
 
                         Spacer(Modifier.weight(1f))
 
-                        if (state.topTab == TopTab.GAMES) {
-                            IconButton(
-                                onClick  = viewModel::toggleLayoutMode,
-                                modifier = Modifier.size(40.dp).glassChip(CircleShape)
-                            ) {
-                                Icon(
-                                    if (state.layoutMode == LayoutMode.CAROUSEL) Icons.Default.GridView else Icons.Default.ViewCarousel,
-                                    contentDescription = "Toggle layout",
-                                    tint = TileText, modifier = Modifier.size(20.dp)
-                                )
-                            }
-                        }
                         IconButton(
                             onClick  = onSettingsClick,
-                            modifier = Modifier.padding(start = 10.dp).size(40.dp).glassChip(CircleShape)
+                            modifier = Modifier.size(40.dp).glassChip(CircleShape)
                         ) {
                             Icon(Icons.Default.Settings, contentDescription = "Settings", tint = TileText, modifier = Modifier.size(20.dp))
                         }
@@ -280,34 +239,19 @@ fun HomeScreen(
                                 platforms       = state.platforms,
                                 counts          = state.platformCounts,
                                 focusedIndex    = systemFocusIndex,
-                                layoutMode      = state.layoutMode,
                                 previewArt      = state.systemPreviewArt,
                                 onSystemFocused = viewModel::focusSystem,
                                 onSystemClick   = { gridFocusIndex = 0; viewModel.enterSystem(it) },
                                 modifier        = Modifier.fillMaxSize()
                             )
 
-                        state.topTab == TopTab.GAMES -> when (state.layoutMode) {
-                            LayoutMode.CAROUSEL -> CarouselHomeContent(
-                                games             = state.games,
-                                selectedGameMedia = state.selectedGameMedia,
-                                mediaForGames     = state.mediaForGames,
-                                selectedIndex     = state.selectedGameIndex,
-                                shouldPlayVideo   = state.shouldPlayVideo,
-                                videoMuted        = state.videoMuted,
-                                onGameSelected    = viewModel::onGameSelected,
-                                onGameClick       = onGameClick,
-                                onMuteToggle      = viewModel::toggleMute,
-                                modifier          = Modifier.fillMaxSize()
-                            )
-                            LayoutMode.GRID -> GridHomeContent(
-                                games            = state.games,
-                                onGameClick      = onGameClick,
-                                mediaForGames    = state.mediaForGames,
-                                focusedGameIndex = gridFocusIndex,
-                                modifier         = Modifier.fillMaxSize()
-                            )
-                        }
+                        state.topTab == TopTab.GAMES -> GridHomeContent(
+                            games            = state.games,
+                            onGameClick      = onGameClick,
+                            mediaForGames    = state.mediaForGames,
+                            focusedGameIndex = gridFocusIndex,
+                            modifier         = Modifier.fillMaxSize()
+                        )
 
                         state.topTab == TopTab.APPS ->
                             AppsContent(

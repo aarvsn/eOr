@@ -1,5 +1,8 @@
 package com.gamelaunch.frontend.ui.theme.grid
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -12,12 +15,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.gamelaunch.frontend.domain.model.Game
@@ -25,18 +31,31 @@ import com.gamelaunch.frontend.domain.model.GameMedia
 import com.gamelaunch.frontend.ui.component.AsyncGameArtwork
 import com.gamelaunch.frontend.ui.theme.ElectricBlue
 import com.gamelaunch.frontend.ui.theme.NeonPurple
+import kotlinx.coroutines.delay
 
 @Composable
 fun GridGameCard(
     game: Game,
+    index: Int = 0,
     media: GameMedia? = null,
     isFocused: Boolean = false,
     onClick: () -> Unit
 ) {
     val shape = RoundedCornerShape(12.dp)
 
+    // Entrance: rise up from the bottom with a slight spring bounce, staggered by position.
+    val enter = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        delay(index.coerceAtMost(18) * 28L)
+        enter.animateTo(1f, spring(dampingRatio = 0.58f, stiffness = Spring.StiffnessMediumLow))
+    }
+
     Box(
         modifier = Modifier
+            .graphicsLayer {
+                translationY = (1f - enter.value) * 72.dp.toPx()
+                alpha = enter.value.coerceIn(0f, 1f)
+            }
             .then(
                 if (isFocused)
                     Modifier.shadow(28.dp, shape, spotColor = ElectricBlue, ambientColor = NeonPurple.copy(alpha = 0.5f))

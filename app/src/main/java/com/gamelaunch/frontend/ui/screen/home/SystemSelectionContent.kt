@@ -22,10 +22,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.itemsIndexed as gridItemsIndexed
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -56,14 +52,12 @@ import com.gamelaunch.frontend.ui.theme.TileSub
 import com.gamelaunch.frontend.ui.theme.TileText
 import com.gamelaunch.frontend.ui.theme.glassTile
 import com.gamelaunch.frontend.ui.theme.tileColor
-import com.gamelaunch.frontend.ui.theme.LayoutMode
 
 @Composable
 fun SystemSelectionContent(
     platforms: List<String>,
     counts: Map<String, Int>,
     focusedIndex: Int,
-    layoutMode: LayoutMode,
     previewArt: List<String> = emptyList(),
     onSystemFocused: (String) -> Unit = {},
     onSystemClick: (String) -> Unit,
@@ -75,44 +69,7 @@ fun SystemSelectionContent(
         }
         return
     }
-
-    if (layoutMode == LayoutMode.CAROUSEL)
-        SystemCarousel(platforms, counts, focusedIndex, previewArt, onSystemFocused, onSystemClick, modifier)
-    else
-        SystemGrid(platforms, counts, focusedIndex, onSystemClick, modifier)
-}
-
-@Composable
-private fun SystemGrid(
-    platforms: List<String>,
-    counts: Map<String, Int>,
-    focusedIndex: Int,
-    onSystemClick: (String) -> Unit,
-    modifier: Modifier
-) {
-    val gridState = rememberLazyGridState()
-    LaunchedEffect(focusedIndex) {
-        if (focusedIndex in platforms.indices) gridState.animateScrollToItem(focusedIndex)
-    }
-    LazyVerticalGrid(
-        columns = GridCells.Adaptive(minSize = 150.dp),
-        state = gridState,
-        contentPadding = PaddingValues(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = modifier
-    ) {
-        gridItemsIndexed(platforms, key = { _, id -> id }) { index, platformId ->
-            SystemCard(
-                platformId = platformId,
-                count = counts[platformId] ?: 0,
-                isFocused = index == focusedIndex,
-                color = tileColor(index),
-                modifier = Modifier.height(132.dp).fillMaxWidth(),
-                onClick = { onSystemClick(platformId) }
-            )
-        }
-    }
+    SystemCarousel(platforms, counts, focusedIndex, previewArt, onSystemFocused, onSystemClick, modifier)
 }
 
 @Composable
@@ -175,7 +132,7 @@ private fun SystemCarousel(
                             rotationZ = (rel * 9f + jitter[i % jitter.size]) * cp
                             translationX = rel * 84.dp.toPx() * cp
                             // rise up from below to a slightly-lifted resting arc
-                            val restY = (absRel * 10f - 40f).dp.toPx()
+                            val restY = (absRel * 10f - 20f).dp.toPx()
                             val startY = 130.dp.toPx()
                             translationY = startY + (restY - startY) * cp
                             scaleX = perspective
