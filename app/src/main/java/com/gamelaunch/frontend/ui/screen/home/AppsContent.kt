@@ -1,6 +1,7 @@
 package com.gamelaunch.frontend.ui.screen.home
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,6 +34,8 @@ import androidx.compose.ui.unit.dp
 import com.gamelaunch.frontend.domain.model.InstalledApp
 import com.gamelaunch.frontend.launcher.PackageManagerHelper
 import com.gamelaunch.frontend.ui.component.AppIcon
+import com.gamelaunch.frontend.ui.theme.BounceDurationMs
+import com.gamelaunch.frontend.ui.theme.BounceEasing
 import com.gamelaunch.frontend.ui.theme.BrandBlue
 import com.gamelaunch.frontend.ui.theme.TileSub
 import com.gamelaunch.frontend.ui.theme.TileText
@@ -95,7 +98,11 @@ private fun AppCard(
     onClick: () -> Unit
 ) {
     val shape = RoundedCornerShape(20.dp)
-    val scale by animateFloatAsState(if (isFocused) 1.07f else 1f, label = "appTileScale")
+    val scale by animateFloatAsState(
+        targetValue = if (isFocused) 1.08f else 1f,
+        animationSpec = tween(durationMillis = BounceDurationMs, easing = BounceEasing),
+        label = "appTileScale"
+    )
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,

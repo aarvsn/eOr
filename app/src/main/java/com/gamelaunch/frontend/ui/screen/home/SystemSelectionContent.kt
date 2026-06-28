@@ -1,6 +1,7 @@
 package com.gamelaunch.frontend.ui.screen.home
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -37,6 +38,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.gamelaunch.frontend.ui.component.platformDisplayName
 import com.gamelaunch.frontend.ui.component.platformPadIcon
+import com.gamelaunch.frontend.ui.theme.BounceDurationMs
+import com.gamelaunch.frontend.ui.theme.BounceEasing
 import com.gamelaunch.frontend.ui.theme.TileSub
 import com.gamelaunch.frontend.ui.theme.TileText
 import com.gamelaunch.frontend.ui.theme.glassTile
@@ -150,7 +153,11 @@ private fun SystemCard(
     iconSize: Int = 44
 ) {
     val shape = RoundedCornerShape(24.dp)
-    val scale by animateFloatAsState(if (isFocused) 1.06f else 1f, label = "systemTileScale")
+    val scale by animateFloatAsState(
+        targetValue = if (isFocused) 1.07f else 1f,
+        animationSpec = tween(durationMillis = BounceDurationMs, easing = BounceEasing),
+        label = "systemTileScale"
+    )
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,

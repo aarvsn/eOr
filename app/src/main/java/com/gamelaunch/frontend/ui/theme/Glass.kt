@@ -1,5 +1,6 @@
 package com.gamelaunch.frontend.ui.theme
 
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -35,6 +36,10 @@ val TilePalette = listOf(
     Color(0xFF53CFE0), // teal
 )
 fun tileColor(index: Int): Color = TilePalette[index % TilePalette.size]
+
+// "Back-ease" bezier — overshoots past the target then settles, for a natural little bounce.
+val BounceEasing = CubicBezierEasing(0.34f, 1.8f, 0.45f, 1f)
+const val BounceDurationMs = 420
 
 /** Soft pastel ambient over a light grey base — gentle colour washes for depth. */
 @Composable
