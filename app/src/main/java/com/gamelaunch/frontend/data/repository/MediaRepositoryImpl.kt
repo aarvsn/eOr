@@ -36,7 +36,24 @@ class MediaRepositoryImpl @Inject constructor(
         gameMediaDao.observeAllMedia().map { list -> list.associate { it.gameId to it.toDomain() } }
 
     override suspend fun upsertMedia(media: GameMedia) {
-        gameMediaDao.upsertMedia(media.toEntity())
+        // @Upsert matches on the primary key `id`, not the unique game_id index. A fresh
+        // GameMedia has id = 0, so for a game that already has a media row the insert would
+        // conflict and the fallback UPDATE (WHERE id = 0) silently no-ops. Merge against the
+        // existing row instead: keep its id, and only overwrite fields the caller actually set.
+        val existing = gameMediaDao.getMediaForGame(media.gameId)
+        val merged = (existing ?: GameMediaEntity(gameId = media.gameId)).copy(
+            boxArtLocalPath     = media.boxArtLocalPath     ?: existing?.boxArtLocalPath,
+            boxArtRemoteUrl     = media.boxArtRemoteUrl     ?: existing?.boxArtRemoteUrl,
+            screenshotLocalPath = media.screenshotLocalPath ?: existing?.screenshotLocalPath,
+            screenshotRemoteUrl = media.screenshotRemoteUrl ?: existing?.screenshotRemoteUrl,
+            wheelLogoLocalPath  = media.wheelLogoLocalPath  ?: existing?.wheelLogoLocalPath,
+            wheelLogoRemoteUrl  = media.wheelLogoRemoteUrl  ?: existing?.wheelLogoRemoteUrl,
+            videoLocalPath      = media.videoLocalPath      ?: existing?.videoLocalPath,
+            videoRemoteUrl      = media.videoRemoteUrl      ?: existing?.videoRemoteUrl,
+            backgroundLocalPath = media.backgroundLocalPath ?: existing?.backgroundLocalPath,
+            scraperTimestampMs  = media.scraperTimestampMs  ?: existing?.scraperTimestampMs,
+        )
+        gameMediaDao.upsertMedia(merged)
     }
 
     override suspend fun downloadAndCacheBoxArt(gameId: Long, url: String): String? =
