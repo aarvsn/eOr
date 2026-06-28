@@ -24,31 +24,116 @@ fun platformDisplayName(platformId: String): String =
     PlatformDefinitions.byId[platformId]?.displayName ?: platformLabel(platformId)
 
 /**
- * Full-colour console/controller illustration for a platform, from KyleBing's
- * retro-game-console-icons (GPL-3.0). Null where the pack has no matching icon — callers fall
- * back to [platformPadIcon].
+ * Full-colour console illustrations from KyleBing's retro-game-console-icons (GPL-3.0). The whole
+ * pack is bundled, keyed by the pack's own console abbreviations, so adding a new platform usually
+ * needs no new asset — only (optionally) an alias below if our platformId differs from the pack key.
  */
+private val iconByKey: Map<String, Int> = mapOf(
+        "32x" to R.drawable.ic_sys_32x,
+        "5200" to R.drawable.ic_sys_5200,
+        "7800" to R.drawable.ic_sys_7800,
+        "amiga" to R.drawable.ic_sys_amiga,
+        "arcade" to R.drawable.ic_sys_arcade,
+        "arduboy" to R.drawable.ic_sys_arduboy,
+        "atari" to R.drawable.ic_sys_atari,
+        "atari800" to R.drawable.ic_sys_atari800,
+        "atarist" to R.drawable.ic_sys_atarist,
+        "atomiswave" to R.drawable.ic_sys_atomiswave,
+        "c64" to R.drawable.ic_sys_c64,
+        "chai" to R.drawable.ic_sys_chai,
+        "col" to R.drawable.ic_sys_col,
+        "cpc" to R.drawable.ic_sys_cpc,
+        "cps1" to R.drawable.ic_sys_cps1,
+        "cps2" to R.drawable.ic_sys_cps2,
+        "cps3" to R.drawable.ic_sys_cps3,
+        "dc" to R.drawable.ic_sys_dc,
+        "doom" to R.drawable.ic_sys_doom,
+        "dos" to R.drawable.ic_sys_dos,
+        "easyrpg" to R.drawable.ic_sys_easyrpg,
+        "fairchild" to R.drawable.ic_sys_fairchild,
+        "fc" to R.drawable.ic_sys_fc,
+        "fds" to R.drawable.ic_sys_fds,
+        "ffplay" to R.drawable.ic_sys_ffplay,
+        "gb" to R.drawable.ic_sys_gb,
+        "gba" to R.drawable.ic_sys_gba,
+        "gbc" to R.drawable.ic_sys_gbc,
+        "gg" to R.drawable.ic_sys_gg,
+        "gw" to R.drawable.ic_sys_gw,
+        "itv" to R.drawable.ic_sys_itv,
+        "lynx" to R.drawable.ic_sys_lynx,
+        "mame" to R.drawable.ic_sys_mame,
+        "md" to R.drawable.ic_sys_md,
+        "megaduck" to R.drawable.ic_sys_megaduck,
+        "ms" to R.drawable.ic_sys_ms,
+        "msu1" to R.drawable.ic_sys_msu1,
+        "msumd" to R.drawable.ic_sys_msumd,
+        "msx" to R.drawable.ic_sys_msx,
+        "n64" to R.drawable.ic_sys_n64,
+        "n64dd" to R.drawable.ic_sys_n64dd,
+        "naomi" to R.drawable.ic_sys_naomi,
+        "nds" to R.drawable.ic_sys_nds,
+        "neocd" to R.drawable.ic_sys_neocd,
+        "neogeo" to R.drawable.ic_sys_neogeo,
+        "ngc" to R.drawable.ic_sys_ngc,
+        "ngp" to R.drawable.ic_sys_ngp,
+        "ngpc" to R.drawable.ic_sys_ngpc,
+        "ody" to R.drawable.ic_sys_ody,
+        "openbor" to R.drawable.ic_sys_openbor,
+        "pc88" to R.drawable.ic_sys_pc88,
+        "pc98" to R.drawable.ic_sys_pc98,
+        "pce" to R.drawable.ic_sys_pce,
+        "pcecd" to R.drawable.ic_sys_pcecd,
+        "pcfx" to R.drawable.ic_sys_pcfx,
+        "pico" to R.drawable.ic_sys_pico,
+        "poke" to R.drawable.ic_sys_poke,
+        "ports" to R.drawable.ic_sys_ports,
+        "ps" to R.drawable.ic_sys_ps,
+        "psp" to R.drawable.ic_sys_psp,
+        "quake" to R.drawable.ic_sys_quake,
+        "satella" to R.drawable.ic_sys_satella,
+        "saturn" to R.drawable.ic_sys_saturn,
+        "scummvm" to R.drawable.ic_sys_scummvm,
+        "segacd" to R.drawable.ic_sys_segacd,
+        "segasgone" to R.drawable.ic_sys_segasgone,
+        "sfc" to R.drawable.ic_sys_sfc,
+        "sgb" to R.drawable.ic_sys_sgb,
+        "sgfx" to R.drawable.ic_sys_sgfx,
+        "sufami" to R.drawable.ic_sys_sufami,
+        "supervision" to R.drawable.ic_sys_supervision,
+        "tic" to R.drawable.ic_sys_tic,
+        "vb" to R.drawable.ic_sys_vb,
+        "vdp" to R.drawable.ic_sys_vdp,
+        "vectrex" to R.drawable.ic_sys_vectrex,
+        "wolf" to R.drawable.ic_sys_wolf,
+        "ws" to R.drawable.ic_sys_ws,
+        "wsc" to R.drawable.ic_sys_wsc,
+        "x68000" to R.drawable.ic_sys_x68000,
+        "zxs" to R.drawable.ic_sys_zxs,
+)
+
+// our platformId -> pack key, only where the two differ (direct id matches resolve automatically)
+private val platformIconAlias: Map<String, String> = mapOf(
+    "nes" to "fc", "famicom" to "fc",
+    "snes" to "sfc",
+    "genesis" to "md", "megadrive" to "md",
+    "sms" to "ms", "mastersystem" to "ms",
+    "gamegear" to "gg",
+    "ps1" to "ps", "psx" to "ps",
+    "atari2600" to "atari",
+    "gamecube" to "ngc", "gc" to "ngc",
+    "neogeocd" to "neocd",
+    "pcengine" to "pce", "tg16" to "pce",
+    "pcenginecd" to "pcecd",
+    "wonderswan" to "ws", "wonderswancolor" to "wsc",
+    "virtualboy" to "vb",
+    "colecovision" to "col",
+    "intellivision" to "itv",
+)
+
+/** Console illustration for a platform, or null if the pack has none (callers fall back to [platformPadIcon]). */
 @DrawableRes
-fun platformIcon(platformId: String): Int? = when (platformId) {
-    "nes"       -> R.drawable.ic_sys_nes
-    "snes"      -> R.drawable.ic_sys_snes
-    "n64"       -> R.drawable.ic_sys_n64
-    "gb"        -> R.drawable.ic_sys_gb
-    "gbc"       -> R.drawable.ic_sys_gbc
-    "gba"       -> R.drawable.ic_sys_gba
-    "nds"       -> R.drawable.ic_sys_nds
-    "ps1"       -> R.drawable.ic_sys_ps1
-    "psp"       -> R.drawable.ic_sys_psp
-    "dc"        -> R.drawable.ic_sys_dc
-    "genesis"   -> R.drawable.ic_sys_genesis
-    "sms"       -> R.drawable.ic_sys_sms
-    "gg"        -> R.drawable.ic_sys_gg
-    "32x"       -> R.drawable.ic_sys_32x
-    "atari2600" -> R.drawable.ic_sys_atari2600
-    "mame"      -> R.drawable.ic_sys_mame
-    "saturn"    -> R.drawable.ic_sys_saturn
-    else        -> null   // ps2, 3ds, switch — no icon in the pack
-}
+fun platformIcon(platformId: String): Int? =
+    iconByKey[platformIconAlias[platformId] ?: platformId]
 
 /** A controller silhouette that fits each console family — a bit of whimsy. */
 @DrawableRes
