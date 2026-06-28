@@ -143,32 +143,44 @@ private fun SystemCarousel(
 
     Column(modifier.fillMaxSize()) {
 
-        // ── Preview (top): an organic fan of box art that slides in on change ──
+        // ── Preview (top): covers rise from the bottom and fan out, centre largest ──
         Box(
             modifier = Modifier.weight(1f).fillMaxWidth(),
             contentAlignment = Alignment.Center
         ) {
             val covers = previewArt.take(5)
-            // subtle slide + fade whenever the focused system changes
-            val slide = remember { Animatable(0f) }
-            LaunchedEffect(focused) {
-                slide.snapTo(1f)
-                slide.animateTo(0f, tween(durationMillis = 360, easing = FastOutSlowInEasing))
+            val n = covers.size
+            // one progress per cover-set; cards rise + fan as it goes 0 -> 1
+            val progress = remember { Animatable(1f) }
+            LaunchedEffect(previewArt) {
+                progress.snapTo(0f)
+                progress.animateTo(1f, tween(durationMillis = 640, easing = FastOutSlowInEasing))
             }
             // small hand-placed jitter so the fan doesn't look mechanical
             val jitter = listOf(-2.2f, 1.6f, -0.7f, 1.9f, -1.4f)
             covers.forEachIndexed { i, art ->
-                val n = covers.size
                 val rel = i - (n - 1) / 2f
+                val absRel = kotlin.math.abs(rel)
+                // stagger: centre leads, outer cards follow as it fans out
+                val stagger = 0.13f
+                val maxDelay = ((n - 1) / 2f) * stagger
+                val cp = ((progress.value - absRel * stagger) / (1f - maxDelay)).coerceIn(0f, 1f)
+                val perspective = 1f - absRel * 0.08f   // centre card biggest -> depth
                 Box(
                     modifier = Modifier
-                        .zIndex(n - kotlin.math.abs(rel))
+                        .zIndex(n - absRel)
                         .graphicsLayer {
-                            transformOrigin = TransformOrigin(0.5f, 1.4f)
-                            rotationZ = rel * 9f + jitter[i % jitter.size]
-                            translationX = rel * 86.dp.toPx() + slide.value * 60f
-                            translationY = (kotlin.math.abs(rel) * 11f).dp.toPx()
-                            alpha = 1f - slide.value * 0.85f
+                            transformOrigin = TransformOrigin(0.5f, 1.3f)
+                            // fan opens out (rotation + horizontal spread) as the card rises
+                            rotationZ = (rel * 9f + jitter[i % jitter.size]) * cp
+                            translationX = rel * 84.dp.toPx() * cp
+                            // rise up from below to a slightly-lifted resting arc
+                            val restY = (absRel * 10f - 40f).dp.toPx()
+                            val startY = 130.dp.toPx()
+                            translationY = startY + (restY - startY) * cp
+                            scaleX = perspective
+                            scaleY = perspective
+                            alpha = (cp * 1.5f).coerceAtMost(1f)
                         }
                 ) {
                     AsyncGameArtwork(
@@ -176,7 +188,7 @@ private fun SystemCarousel(
                         remoteUrl = art,
                         contentDescription = null,
                         modifier = Modifier
-                            .height(184.dp)
+                            .height(188.dp)
                             .aspectRatio(0.72f)
                             .shadow(14.dp, RoundedCornerShape(10.dp))
                             .clip(RoundedCornerShape(10.dp))

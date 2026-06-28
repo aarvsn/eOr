@@ -26,7 +26,7 @@ interface GameMediaDao {
         JOIN games g ON g.id = m.game_id
         WHERE g.platform_id = :platformId
           AND (m.box_art_local IS NOT NULL OR m.box_art_remote IS NOT NULL)
-        ORDER BY g.title ASC LIMIT :limit
+        ORDER BY RANDOM() LIMIT :limit
     """)
     suspend fun getBoxArtSampleForPlatform(platformId: String, limit: Int): List<String>
 
