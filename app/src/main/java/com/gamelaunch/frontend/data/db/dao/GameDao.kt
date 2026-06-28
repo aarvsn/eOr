@@ -16,7 +16,7 @@ interface GameDao {
     @Query("SELECT * FROM games ORDER BY title ASC")
     fun getAllGames(): Flow<List<GameEntity>>
 
-    @Query("SELECT * FROM games WHERE platform_id = :platformId ORDER BY title ASC")
+    @Query("SELECT * FROM games WHERE platform_id = :platformId AND rom_filename NOT LIKE '.%' ORDER BY title ASC")
     fun getGamesByPlatform(platformId: String): Flow<List<GameEntity>>
 
     @Query("SELECT * FROM games WHERE id = :id")
@@ -31,10 +31,10 @@ interface GameDao {
     @Query("SELECT * FROM games ORDER BY last_played_ms DESC LIMIT :limit")
     fun getRecentlyPlayed(limit: Int = 20): Flow<List<GameEntity>>
 
-    @Query("SELECT DISTINCT platform_id FROM games ORDER BY platform_id ASC")
+    @Query("SELECT DISTINCT platform_id FROM games WHERE rom_filename NOT LIKE '.%' ORDER BY platform_id ASC")
     fun getDistinctPlatformIds(): Flow<List<String>>
 
-    @Query("SELECT platform_id AS platformId, COUNT(*) AS count FROM games GROUP BY platform_id")
+    @Query("SELECT platform_id AS platformId, COUNT(*) AS count FROM games WHERE rom_filename NOT LIKE '.%' GROUP BY platform_id")
     fun getPlatformCounts(): Flow<List<PlatformCount>>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)

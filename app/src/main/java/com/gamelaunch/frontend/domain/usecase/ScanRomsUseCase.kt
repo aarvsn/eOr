@@ -27,6 +27,17 @@ class ScanRomsUseCase @Inject constructor(
         ".txt", ".xml", ".cue", ".nfo", ".jpg", ".png", ".mp4", ".zip", ".7z", ".rar"
     )
 
+    // Emulator data sub-folders (saves, shaders, system files…) that hold no ROMs. Pruning
+    // them keeps stray data files (e.g. PSP SAVEDATA/*.bin) out of the library and speeds scans.
+    private val skipFolders = setOf(
+        "savedata", "save", "saves", "savestates", "states", "savefiles",
+        "sdmc", "nand", "shaders", "cache", "log", "logs", "dump", "dumps",
+        "screenshots", "cheats", "textures", "texture_cache", "system",
+        "memcards", "memory cards", "bios", "tmp", "temp", "config", "configs",
+        "os0", "vs0", "ur0", "tm0", "ud0", "pd0", "sa0", "gro0", "grw0",
+        "license", "appmeta", "ppsspp_state", "private"
+    )
+
     operator fun invoke(rootPath: String): Flow<ScanProgress> = flow {
         val resolvedPath = StorageUtils.resolveStoredPath(rootPath)
         val rootDir = File(resolvedPath)
@@ -36,7 +47,10 @@ class ScanRomsUseCase @Inject constructor(
         }
 
         val romFiles = rootDir.walkTopDown()
-            .filter { it.isFile && ".${it.extension.lowercase()}" !in skipExtensions }
+            // Don't descend into hidden folders or known emulator-data folders.
+            .onEnter { !it.name.startsWith(".") && it.name.lowercase() !in skipFolders }
+            // Skip hidden files (e.g. macOS "._Foo.chd" AppleDouble files and .DS_Store)
+            .filter { it.isFile && !it.name.startsWith(".") && ".${it.extension.lowercase()}" !in skipExtensions }
             .toList()
 
         val validPaths = mutableListOf<String>()
