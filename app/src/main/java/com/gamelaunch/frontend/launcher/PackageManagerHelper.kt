@@ -22,6 +22,7 @@ class PackageManagerHelper @Inject constructor(
         "org.libretro.retroarch"             to "RetroArch",
         // PS1 / PS2 / PSP / Vita
         "com.github.stenzek.duckstation"     to "DuckStation (PS1)",
+        "xyz.aethersx2.android"              to "NetherSX2 / AetherSX2 (PS2)",  // shared package id
         "xyz.trizle.nethersx2"               to "NetherSX2 (PS2)",
         "net.play.ptmk.ps2"                  to "AetherSX2 (PS2)",
         "org.ppsspp.ppssppgold"              to "PPSSPP Gold (PSP)",
@@ -73,7 +74,7 @@ class PackageManagerHelper @Inject constructor(
         "3ds"       to listOf("org.azahar_emu.azahar", "org.citra.emu", "com.weihuoya.citra", "org.citra_emu.citra", "com.retroarch.aarch64", "org.libretro.retroarch"),
         "switch"    to listOf("dev.eden.eden_emulator", "dev.eden.emulator", "org.sudachi.sudachi_emu", "org.yuzu.yuzu_emu"),
         "ps1"       to listOf("com.github.stenzek.duckstation", "com.retroarch.aarch64", "org.libretro.retroarch"),
-        "ps2"       to listOf("xyz.trizle.nethersx2", "net.play.ptmk.ps2", "com.retroarch.aarch64", "org.libretro.retroarch"),
+        "ps2"       to listOf("xyz.aethersx2.android", "xyz.trizle.nethersx2", "net.play.ptmk.ps2", "com.retroarch.aarch64", "org.libretro.retroarch"),
         "psp"       to listOf("org.ppsspp.ppssppgold", "org.ppsspp.ppsspp", "com.retroarch.aarch64", "org.libretro.retroarch"),
         "dc"        to listOf("io.recompiled.redream", "com.flycast.emulator", "com.reicast.emulator", "com.retroarch.aarch64", "org.libretro.retroarch"),
         "genesis"   to listOf("com.retroarch.aarch64", "org.libretro.retroarch"),

@@ -19,6 +19,7 @@
         <package android:name="org.libretro.retroarch" />
         <!-- PlayStation -->
         <package android:name="com.github.stenzek.duckstation" />
+        <package android:name="xyz.aethersx2.android" />
         <package android:name="xyz.trizle.nethersx2" />
         <package android:name="net.play.ptmk.ps2" />
         <!-- PSP / Vita -->

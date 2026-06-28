@@ -125,6 +125,16 @@ class EmulatorLauncher @Inject constructor(
         "com.github.stenzek.duckstation" to
             LaunchSpec("com.github.stenzek.duckstation.EmulationActivity",
                        romExtraKey = "bootPath", action = Intent.ACTION_MAIN),
+        // PS2 — NetherSX2 / AetherSX2 share DuckStation's launch convention (same author).
+        "xyz.aethersx2.android" to
+            LaunchSpec("xyz.aethersx2.android.EmulationActivity",
+                       romExtraKey = "bootPath", action = Intent.ACTION_MAIN),
+        "xyz.trizle.nethersx2" to
+            LaunchSpec("xyz.aethersx2.android.EmulationActivity",
+                       romExtraKey = "bootPath", action = Intent.ACTION_MAIN),
+        "net.play.ptmk.ps2" to
+            LaunchSpec("xyz.aethersx2.android.EmulationActivity",
+                       romExtraKey = "bootPath", action = Intent.ACTION_MAIN),
         // PSP — PPSSPP reads getData().
         "org.ppsspp.ppsspp"     to LaunchSpec("org.ppsspp.ppsspp.PpssppActivity"),
         "org.ppsspp.ppssppgold" to LaunchSpec("org.ppsspp.ppsspp.PpssppActivity"),
