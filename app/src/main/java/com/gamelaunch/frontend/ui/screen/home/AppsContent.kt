@@ -30,8 +30,11 @@ import androidx.compose.ui.unit.dp
 import com.gamelaunch.frontend.domain.model.InstalledApp
 import com.gamelaunch.frontend.launcher.PackageManagerHelper
 import com.gamelaunch.frontend.ui.component.AppIcon
-import com.gamelaunch.frontend.ui.theme.ElectricBlue
-import com.gamelaunch.frontend.ui.theme.glass
+import com.gamelaunch.frontend.ui.theme.BrandBlue
+import com.gamelaunch.frontend.ui.theme.TileSub
+import com.gamelaunch.frontend.ui.theme.TileText
+import com.gamelaunch.frontend.ui.theme.glassTile
+import com.gamelaunch.frontend.ui.theme.tileColor
 
 @Composable
 fun AppsContent(
@@ -44,13 +47,13 @@ fun AppsContent(
 ) {
     if (isLoading) {
         Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = ElectricBlue)
+            CircularProgressIndicator(color = BrandBlue)
         }
         return
     }
     if (apps.isEmpty()) {
         Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No apps found", color = Color.White.copy(alpha = 0.7f))
+            Text("No apps found", color = TileSub)
         }
         return
     }
@@ -72,6 +75,7 @@ fun AppsContent(
             AppCard(
                 app = app,
                 isFocused = index == focusedIndex,
+                color = tileColor(index),
                 packageManagerHelper = packageManagerHelper,
                 onClick = { onAppClick(app.packageName) }
             )
@@ -83,6 +87,7 @@ fun AppsContent(
 private fun AppCard(
     app: InstalledApp,
     isFocused: Boolean,
+    color: Color,
     packageManagerHelper: PackageManagerHelper,
     onClick: () -> Unit
 ) {
@@ -92,7 +97,7 @@ private fun AppCard(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxWidth()
-            .glass(shape, selected = isFocused)
+            .glassTile(shape, color = color, selected = isFocused)
             .clickable(onClick = onClick)
             .padding(vertical = 14.dp, horizontal = 8.dp)
     ) {
@@ -105,7 +110,7 @@ private fun AppCard(
         Text(
             text = app.label,
             style = MaterialTheme.typography.labelMedium,
-            color = if (isFocused) Color.White else MaterialTheme.colorScheme.onSurface,
+            color = TileText,
             textAlign = TextAlign.Center,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis

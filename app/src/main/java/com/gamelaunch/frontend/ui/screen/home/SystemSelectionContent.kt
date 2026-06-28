@@ -34,8 +34,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.gamelaunch.frontend.ui.component.platformDisplayName
 import com.gamelaunch.frontend.ui.component.platformPadIcon
-import com.gamelaunch.frontend.ui.theme.IceWhite
-import com.gamelaunch.frontend.ui.theme.glass
+import com.gamelaunch.frontend.ui.theme.TileSub
+import com.gamelaunch.frontend.ui.theme.TileText
+import com.gamelaunch.frontend.ui.theme.glassTile
+import com.gamelaunch.frontend.ui.theme.tileColor
 import com.gamelaunch.frontend.ui.theme.LayoutMode
 
 @Composable
@@ -85,6 +87,7 @@ private fun SystemGrid(
                 platformId = platformId,
                 count = counts[platformId] ?: 0,
                 isFocused = index == focusedIndex,
+                color = tileColor(index),
                 modifier = Modifier.height(132.dp).fillMaxWidth(),
                 onClick = { onSystemClick(platformId) }
             )
@@ -123,6 +126,7 @@ private fun SystemCarousel(
                     platformId = platformId,
                     count = counts[platformId] ?: 0,
                     isFocused = index == focusedIndex,
+                    color = tileColor(index),
                     modifier = Modifier.width(210.dp).height(210.dp),
                     iconSize = 64,
                     onClick = { onSystemClick(platformId) }
@@ -137,6 +141,7 @@ private fun SystemCard(
     platformId: String,
     count: Int,
     isFocused: Boolean,
+    color: Color,
     modifier: Modifier,
     onClick: () -> Unit,
     iconSize: Int = 44
@@ -147,14 +152,14 @@ private fun SystemCard(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
         modifier = modifier
-            .glass(shape, selected = isFocused)
+            .glassTile(shape, color = color, selected = isFocused)
             .clickable(onClick = onClick)
             .padding(14.dp)
     ) {
         Icon(
             painter = painterResource(platformPadIcon(platformId)),
             contentDescription = null,
-            tint = if (isFocused) Color.White else IceWhite.copy(alpha = 0.85f),
+            tint = TileText,
             modifier = Modifier.size(iconSize.dp)
         )
         Spacer(Modifier.height(10.dp))
@@ -162,7 +167,7 @@ private fun SystemCard(
             text = platformDisplayName(platformId),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.SemiBold,
-            color = if (isFocused) Color.White else IceWhite.copy(alpha = 0.92f),
+            color = TileText,
             textAlign = TextAlign.Center,
             maxLines = 2
         )
@@ -170,7 +175,7 @@ private fun SystemCard(
         Text(
             text = "$count game${if (count == 1) "" else "s"}",
             style = MaterialTheme.typography.labelSmall,
-            color = if (isFocused) Color.White.copy(alpha = 0.85f) else IceWhite.copy(alpha = 0.5f)
+            color = TileSub
         )
     }
 }

@@ -16,16 +16,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 
-// ── Liquid-glass + 3DS palette ──────────────────────────────────────────────
-val InkBg        = Color(0xFF070A18)   // deep base the glows sit on
-val GlowCyan     = Color(0xFF35E8FF)
-val GlowPurple   = Color(0xFF9B6BFF)
-val GlowBlue     = Color(0xFF4D7FFF)
+// ── Light, playful liquid-glass + 3DS palette ───────────────────────────────
+val LightBg   = Color(0xFFEDEFF4)   // very light cool grey base
+val TileText  = Color(0xFF20242E)   // dark slate for labels on light/pastel tiles
+val TileSub   = Color(0xFF5A6173)   // muted slate for subtitles
+val BrandBlue = Color(0xFF3E7BFF)   // accent for selected chips / branding
 
-/**
- * Soft, colourful ambient backdrop — the light the frosted glass refracts. Drawn as a few wide
- * radial glows over a deep ink base, giving the playful 3DS depth without any loud gradients.
- */
+// Cheerful 3DS-ish tile palette — assigned per tile so the grid reads colourful.
+val TilePalette = listOf(
+    Color(0xFF4FB7F5), // sky
+    Color(0xFF7C8CFF), // periwinkle
+    Color(0xFFB07BFF), // lavender
+    Color(0xFFFF7AA8), // rose
+    Color(0xFFFF9F66), // coral
+    Color(0xFFFFC04D), // amber
+    Color(0xFF3FD3A6), // mint
+    Color(0xFF53CFE0), // teal
+)
+fun tileColor(index: Int): Color = TilePalette[index % TilePalette.size]
+
+/** Soft pastel ambient over a light grey base — gentle colour washes for depth. */
 @Composable
 fun AmbientBackground(
     modifier: Modifier = Modifier,
@@ -34,7 +44,7 @@ fun AmbientBackground(
     Box(
         modifier
             .fillMaxSize()
-            .background(InkBg)
+            .background(LightBg)
             .drawBehind {
                 fun glow(color: Color, cx: Float, cy: Float, r: Float) = drawRect(
                     Brush.radialGradient(
@@ -43,46 +53,77 @@ fun AmbientBackground(
                         radius = size.minDimension * r
                     )
                 )
-                glow(GlowCyan.copy(alpha = 0.22f),   0.08f, 0.02f, 0.95f)
-                glow(GlowPurple.copy(alpha = 0.24f), 0.98f, 0.10f, 1.05f)
-                glow(GlowBlue.copy(alpha = 0.18f),   0.50f, 1.05f, 1.10f)
-                glow(GlowPurple.copy(alpha = 0.10f), 0.15f, 0.95f, 0.70f)
+                glow(Color(0xFF6FC4FF).copy(alpha = 0.22f), 0.08f, 0.02f, 0.95f)
+                glow(Color(0xFFB58CFF).copy(alpha = 0.20f), 0.98f, 0.08f, 1.05f)
+                glow(Color(0xFF59E0B8).copy(alpha = 0.16f), 0.55f, 1.05f, 1.05f)
+                glow(Color(0xFFFF9CC0).copy(alpha = 0.14f), 0.18f, 0.95f, 0.75f)
             },
         content = content
     )
 }
 
 /**
- * Frosted-glass surface: a translucent milky fill that picks up the colour behind it, a bright
- * specular highlight along the top edge, and a soft floating shadow (accent-tinted when focused)
- * so tiles feel like they hover, 3DS-style.
+ * Colourful frosted-glass tile: a translucent tinted fill that lets the light base soften it to a
+ * pastel, a bright specular highlight along the top edge, and a soft floating shadow (tinted when
+ * focused). Focused tiles turn vivid and lift, 3DS-style.
  */
-fun Modifier.glass(
+fun Modifier.glassTile(
     shape: Shape,
-    selected: Boolean = false,
-    accent: Color = GlowCyan
+    color: Color,
+    selected: Boolean = false
 ): Modifier = this
     .shadow(
         elevation = if (selected) 16.dp else 6.dp,
         shape = shape,
-        ambientColor = if (selected) accent else Color.Black,
-        spotColor = if (selected) accent else Color.Black,
+        ambientColor = if (selected) color else Color(0xFF2A3550),
+        spotColor = if (selected) color else Color(0xFF2A3550),
         clip = false
     )
     .clip(shape)
     .background(
         Brush.verticalGradient(
-            if (selected) listOf(Color.White.copy(alpha = 0.24f), Color.White.copy(alpha = 0.08f))
-            else listOf(Color.White.copy(alpha = 0.08f), Color.White.copy(alpha = 0.025f))
+            if (selected) listOf(color.copy(alpha = 0.95f), color.copy(alpha = 0.70f))
+            else listOf(color.copy(alpha = 0.60f), color.copy(alpha = 0.38f))
         )
     )
     .border(
         width = if (selected) 1.5.dp else 1.dp,
         brush = Brush.verticalGradient(
             listOf(
-                Color.White.copy(alpha = if (selected) 0.65f else 0.28f),
-                Color.White.copy(alpha = if (selected) 0.14f else 0.05f)
+                Color.White.copy(alpha = if (selected) 0.9f else 0.75f),
+                Color.White.copy(alpha = if (selected) 0.25f else 0.15f)
             )
+        ),
+        shape = shape
+    )
+
+/**
+ * Neutral frosted chip for tabs and icon buttons. Frosted white by default; an accent fill when
+ * selected.
+ */
+fun Modifier.glassChip(
+    shape: Shape,
+    selected: Boolean = false,
+    accent: Color = BrandBlue
+): Modifier = this
+    .shadow(
+        elevation = if (selected) 10.dp else 3.dp,
+        shape = shape,
+        ambientColor = if (selected) accent else Color(0xFF2A3550),
+        spotColor = if (selected) accent else Color(0xFF2A3550),
+        clip = false
+    )
+    .clip(shape)
+    .background(
+        Brush.verticalGradient(
+            if (selected) listOf(accent.copy(alpha = 0.95f), accent.copy(alpha = 0.78f))
+            else listOf(Color.White.copy(alpha = 0.72f), Color.White.copy(alpha = 0.48f))
+        )
+    )
+    .border(
+        width = 1.dp,
+        brush = Brush.verticalGradient(
+            listOf(Color.White.copy(alpha = 0.9f), Color.White.copy(alpha = 0.3f))
         ),
         shape = shape
     )

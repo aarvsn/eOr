@@ -56,13 +56,13 @@ import com.gamelaunch.frontend.ui.input.GamepadR1
 import com.gamelaunch.frontend.ui.input.GamepadR2
 import com.gamelaunch.frontend.ui.input.GamepadStart
 import com.gamelaunch.frontend.ui.theme.AmbientBackground
-import com.gamelaunch.frontend.ui.theme.CyanAccent
+import com.gamelaunch.frontend.ui.theme.BrandBlue
 import com.gamelaunch.frontend.ui.theme.ElectricBlue
-import com.gamelaunch.frontend.ui.theme.InkBg
-import com.gamelaunch.frontend.ui.theme.glass
-import com.gamelaunch.frontend.ui.theme.IceWhite
+import com.gamelaunch.frontend.ui.theme.LightBg
+import com.gamelaunch.frontend.ui.theme.TileSub
+import com.gamelaunch.frontend.ui.theme.TileText
+import com.gamelaunch.frontend.ui.theme.glassChip
 import com.gamelaunch.frontend.ui.theme.LayoutMode
-import com.gamelaunch.frontend.ui.theme.NeonPurple
 import com.gamelaunch.frontend.ui.theme.carousel.CarouselHomeContent
 import com.gamelaunch.frontend.ui.theme.grid.GridHomeContent
 
@@ -116,7 +116,7 @@ fun HomeScreen(
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) { try { focusRequester.requestFocus() } catch (_: Exception) {} }
 
-    Scaffold(containerColor = InkBg) { _ ->
+    Scaffold(containerColor = LightBg) { _ ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -220,8 +220,8 @@ fun HomeScreen(
                             .padding(horizontal = 16.dp, vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("e",  fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = CyanAccent, letterSpacing = 2.sp)
-                        Text("Or", fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = IceWhite, letterSpacing = 2.sp)
+                        Text("e",  fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = BrandBlue, letterSpacing = 2.sp)
+                        Text("Or", fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = TileText, letterSpacing = 2.sp)
 
                         // Inside a system, show which one (the tabs/pills are hidden here)
                         if (state.topTab == TopTab.GAMES && state.gameViewActive) {
@@ -230,7 +230,7 @@ fun HomeScreen(
                                     "  ·  " + platformDisplayName(pid),
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = Color.White.copy(alpha = 0.85f)
+                                    color = TileText.copy(alpha = 0.85f)
                                 )
                             }
                         }
@@ -240,20 +240,20 @@ fun HomeScreen(
                         if (state.topTab == TopTab.GAMES) {
                             IconButton(
                                 onClick  = viewModel::toggleLayoutMode,
-                                modifier = Modifier.size(40.dp).glass(CircleShape)
+                                modifier = Modifier.size(40.dp).glassChip(CircleShape)
                             ) {
                                 Icon(
                                     if (state.layoutMode == LayoutMode.CAROUSEL) Icons.Default.GridView else Icons.Default.ViewCarousel,
                                     contentDescription = "Toggle layout",
-                                    tint = Color.White, modifier = Modifier.size(20.dp)
+                                    tint = TileText, modifier = Modifier.size(20.dp)
                                 )
                             }
                         }
                         IconButton(
                             onClick  = onSettingsClick,
-                            modifier = Modifier.padding(start = 10.dp).size(40.dp).glass(CircleShape)
+                            modifier = Modifier.padding(start = 10.dp).size(40.dp).glassChip(CircleShape)
                         ) {
-                            Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Color.White, modifier = Modifier.size(20.dp))
+                            Icon(Icons.Default.Settings, contentDescription = "Settings", tint = TileText, modifier = Modifier.size(20.dp))
                         }
                     }
 
@@ -345,7 +345,7 @@ private fun ModeTabBar(selected: TopTab, onSelect: (TopTab) -> Unit) {
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .glass(pill, selected = isSel)
+                    .glassChip(pill, selected = isSel)
                     .clickable { onSelect(tab) }
                     .padding(horizontal = 18.dp, vertical = 9.dp)
             ) {
@@ -353,7 +353,7 @@ private fun ModeTabBar(selected: TopTab, onSelect: (TopTab) -> Unit) {
                     text = label,
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal,
-                    color = if (isSel) Color.White else IceWhite.copy(alpha = 0.7f)
+                    color = if (isSel) Color.White else TileText.copy(alpha = 0.8f)
                 )
             }
         }
@@ -370,12 +370,12 @@ private fun RetroAchievementsPlaceholder(modifier: Modifier = Modifier) {
         Icon(
             Icons.Default.EmojiEvents,
             contentDescription = null,
-            tint = NeonPurple,
+            tint = BrandBlue,
             modifier = Modifier.size(64.dp)
         )
         Spacer(Modifier.size(12.dp))
-        Text("RetroAchievements", style = MaterialTheme.typography.titleMedium, color = Color.White)
+        Text("RetroAchievements", style = MaterialTheme.typography.titleMedium, color = TileText)
         Spacer(Modifier.size(4.dp))
-        Text("Coming soon", style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.6f))
+        Text("Coming soon", style = MaterialTheme.typography.bodyMedium, color = TileSub)
     }
 }
