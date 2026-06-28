@@ -23,6 +23,33 @@ fun platformLabel(platformId: String): String =
 fun platformDisplayName(platformId: String): String =
     PlatformDefinitions.byId[platformId]?.displayName ?: platformLabel(platformId)
 
+/**
+ * Full-colour console/controller illustration for a platform, from KyleBing's
+ * retro-game-console-icons (GPL-3.0). Null where the pack has no matching icon — callers fall
+ * back to [platformPadIcon].
+ */
+@DrawableRes
+fun platformIcon(platformId: String): Int? = when (platformId) {
+    "nes"       -> R.drawable.ic_sys_nes
+    "snes"      -> R.drawable.ic_sys_snes
+    "n64"       -> R.drawable.ic_sys_n64
+    "gb"        -> R.drawable.ic_sys_gb
+    "gbc"       -> R.drawable.ic_sys_gbc
+    "gba"       -> R.drawable.ic_sys_gba
+    "nds"       -> R.drawable.ic_sys_nds
+    "ps1"       -> R.drawable.ic_sys_ps1
+    "psp"       -> R.drawable.ic_sys_psp
+    "dc"        -> R.drawable.ic_sys_dc
+    "genesis"   -> R.drawable.ic_sys_genesis
+    "sms"       -> R.drawable.ic_sys_sms
+    "gg"        -> R.drawable.ic_sys_gg
+    "32x"       -> R.drawable.ic_sys_32x
+    "atari2600" -> R.drawable.ic_sys_atari2600
+    "mame"      -> R.drawable.ic_sys_mame
+    "saturn"    -> R.drawable.ic_sys_saturn
+    else        -> null   // ps2, 3ds, switch — no icon in the pack
+}
+
 /** A controller silhouette that fits each console family — a bit of whimsy. */
 @DrawableRes
 fun platformPadIcon(platformId: String): Int = when (platformId) {

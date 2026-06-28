@@ -4,6 +4,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -47,6 +48,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.gamelaunch.frontend.ui.component.AsyncGameArtwork
 import com.gamelaunch.frontend.ui.component.platformDisplayName
+import com.gamelaunch.frontend.ui.component.platformIcon
 import com.gamelaunch.frontend.ui.component.platformPadIcon
 import com.gamelaunch.frontend.ui.theme.BounceDurationMs
 import com.gamelaunch.frontend.ui.theme.BounceEasing
@@ -232,13 +234,22 @@ private fun SystemCard(
             .clickable(onClick = onClick)
             .padding(14.dp)
     ) {
-        Icon(
-            painter = painterResource(platformPadIcon(platformId)),
-            contentDescription = null,
-            tint = TileText,
-            modifier = Modifier.size(iconSize.dp)
-        )
-        Spacer(Modifier.height(10.dp))
+        val illustration = platformIcon(platformId)
+        if (illustration != null) {
+            Image(
+                painter = painterResource(illustration),
+                contentDescription = null,
+                modifier = Modifier.size((iconSize + 12).dp)
+            )
+        } else {
+            Icon(
+                painter = painterResource(platformPadIcon(platformId)),
+                contentDescription = null,
+                tint = TileText,
+                modifier = Modifier.size(iconSize.dp)
+            )
+        }
+        Spacer(Modifier.height(8.dp))
         Text(
             text = platformDisplayName(platformId),
             style = MaterialTheme.typography.titleSmall,
