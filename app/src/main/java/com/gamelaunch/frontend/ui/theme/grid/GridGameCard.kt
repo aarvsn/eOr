@@ -39,15 +39,22 @@ fun GridGameCard(
     index: Int = 0,
     media: GameMedia? = null,
     isFocused: Boolean = false,
+    animateOnEntry: Boolean = true,
     onClick: () -> Unit
 ) {
     val shape = RoundedCornerShape(12.dp)
 
     // Entrance: rise up from the bottom with a slight spring bounce, staggered by position.
-    val enter = remember { Animatable(0f) }
+    // Only the cards present when the system loads should animate — capture that decision at
+    // first composition so cards recycled into view while scrolling appear instantly instead
+    // of re-playing the rise.
+    val shouldAnimate = remember { animateOnEntry }
+    val enter = remember { Animatable(if (shouldAnimate) 0f else 1f) }
     LaunchedEffect(Unit) {
-        delay(index.coerceAtMost(18) * 28L)
-        enter.animateTo(1f, spring(dampingRatio = 0.58f, stiffness = Spring.StiffnessMediumLow))
+        if (shouldAnimate) {
+            delay(index.coerceAtMost(18) * 28L)
+            enter.animateTo(1f, spring(dampingRatio = 0.58f, stiffness = Spring.StiffnessMediumLow))
+        }
     }
 
     Box(
