@@ -66,7 +66,11 @@ import com.gamelaunch.frontend.ui.input.GamepadStart
 import com.gamelaunch.frontend.ui.theme.AmbientBackground
 import com.gamelaunch.frontend.ui.theme.BrandBlue
 import com.gamelaunch.frontend.ui.theme.ElectricBlue
+import com.gamelaunch.frontend.ui.theme.IceWhite
 import com.gamelaunch.frontend.ui.theme.LightBg
+import com.gamelaunch.frontend.ui.theme.LocalDarkMode
+import com.gamelaunch.frontend.ui.theme.NavyBg
+import com.gamelaunch.frontend.ui.theme.SteelGray
 import com.gamelaunch.frontend.ui.theme.TileSub
 import com.gamelaunch.frontend.ui.theme.TileText
 import com.gamelaunch.frontend.ui.theme.glassChip
@@ -81,6 +85,11 @@ fun HomeScreen(
 ) {
     val state     by viewModel.uiState.collectAsState()
     val appsState by appsViewModel.uiState.collectAsState()
+
+    val darkMode      = LocalDarkMode.current
+    val textPrimary   = if (darkMode) IceWhite else TileText
+    val textSecondary = if (darkMode) SteelGray else TileSub
+    val bgColor       = if (darkMode) NavyBg else LightBg
 
     // Controller focus indices for each grid
     var systemFocusIndex by remember { mutableIntStateOf(0) }
@@ -194,7 +203,7 @@ fun HomeScreen(
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) { try { focusRequester.requestFocus() } catch (_: Exception) {} }
 
-    Scaffold(containerColor = LightBg) { _ ->
+    Scaffold(containerColor = bgColor) { _ ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -295,7 +304,7 @@ fun HomeScreen(
                             modifier = Modifier.size(26.dp).padding(end = 6.dp)
                         )
                         Text("e",  fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = BrandBlue, letterSpacing = 2.sp)
-                        Text("Or", fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = TileText, letterSpacing = 2.sp)
+                        Text("Or", fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = textPrimary, letterSpacing = 2.sp)
 
                         // Inside a system, show which one (the tabs/pills are hidden here)
                         if (state.topTab == TopTab.GAMES && state.gameViewActive) {
@@ -304,7 +313,7 @@ fun HomeScreen(
                                     "  ·  " + platformDisplayName(pid),
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = TileText.copy(alpha = 0.85f)
+                                    color = textPrimary.copy(alpha = 0.85f)
                                 )
                             }
                         }
@@ -315,7 +324,7 @@ fun HomeScreen(
                             onClick  = onSettingsClick,
                             modifier = Modifier.size(40.dp).glassChip(CircleShape)
                         ) {
-                            Icon(Icons.Default.Settings, contentDescription = "Settings", tint = TileText, modifier = Modifier.size(20.dp))
+                            Icon(Icons.Default.Settings, contentDescription = "Settings", tint = textPrimary, modifier = Modifier.size(20.dp))
                         }
                     }
 
@@ -419,6 +428,8 @@ private fun ModeTabBar(
 ) {
     val pill = RoundedCornerShape(50)
     val tabs = tabSpecs.filter { it.tab != TopTab.RECENTLY_PLAYED || showRecentlyPlayed }
+    val darkMode = LocalDarkMode.current
+    val unselectedTint = if (darkMode) IceWhite.copy(alpha = 0.8f) else TileText.copy(alpha = 0.8f)
 
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
@@ -438,14 +449,14 @@ private fun ModeTabBar(
                 Icon(
                     spec.icon,
                     contentDescription = null,
-                    tint = if (isSel) Color.White else TileText.copy(alpha = 0.8f),
+                    tint = if (isSel) Color.White else unselectedTint,
                     modifier = Modifier.size(18.dp)
                 )
                 Text(
                     text = spec.label,
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal,
-                    color = if (isSel) Color.White else TileText.copy(alpha = 0.8f)
+                    color = if (isSel) Color.White else unselectedTint
                 )
             }
         }
@@ -459,6 +470,7 @@ private fun EmptyState(
     subtitle: String,
     modifier: Modifier = Modifier
 ) {
+    val darkMode = LocalDarkMode.current
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -466,9 +478,9 @@ private fun EmptyState(
     ) {
         Icon(icon, contentDescription = null, tint = BrandBlue, modifier = Modifier.size(64.dp))
         Spacer(Modifier.size(12.dp))
-        Text(title, style = MaterialTheme.typography.titleMedium, color = TileText)
+        Text(title, style = MaterialTheme.typography.titleMedium, color = if (darkMode) IceWhite else TileText)
         Spacer(Modifier.size(4.dp))
-        Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = TileSub)
+        Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = if (darkMode) SteelGray else TileSub)
     }
 }
 

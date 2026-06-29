@@ -13,6 +13,7 @@ interface SettingsRepository {
     val videoMuted: Flow<Boolean>
     val isFirstLaunch: Flow<Boolean>
     val showRecentlyPlayed: Flow<Boolean>
+    val darkMode: Flow<Boolean>
 
     suspend fun setRomRootPath(path: String)
     suspend fun setMediaFolderPath(path: String)
@@ -29,4 +30,5 @@ interface SettingsRepository {
     suspend fun setVideoMuted(muted: Boolean)
     suspend fun setFirstLaunchComplete()
     suspend fun setShowRecentlyPlayed(enabled: Boolean)
+    suspend fun setDarkMode(enabled: Boolean)
 }

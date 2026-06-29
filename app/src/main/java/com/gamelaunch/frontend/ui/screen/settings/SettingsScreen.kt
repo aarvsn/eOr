@@ -525,6 +525,11 @@ fun SettingsScreen(
                     checked         = state.showRecentlyPlayed,
                     onCheckedChange = viewModel::setShowRecentlyPlayed
                 )
+                CardSwitchRow(
+                    label           = "Dark mode",
+                    checked         = state.darkMode,
+                    onCheckedChange = viewModel::setDarkMode
+                )
             }
 
             Spacer(Modifier.height(16.dp))

@@ -41,7 +41,8 @@ data class SettingsUiState(
     val lbGameCount: Int = 0,
     val mediaFolderPath: String = "",
     val esdeImportStatus: EsdeImportStatus? = null,
-    val showRecentlyPlayed: Boolean = true
+    val showRecentlyPlayed: Boolean = true,
+    val darkMode: Boolean = false
 )
 
 @HiltViewModel
@@ -108,10 +109,19 @@ class SettingsViewModel @Inject constructor(
                 _uiState.update { it.copy(showRecentlyPlayed = show) }
             }
         }
+        viewModelScope.launch {
+            settingsRepository.darkMode.collect { dark ->
+                _uiState.update { it.copy(darkMode = dark) }
+            }
+        }
     }
 
     fun setShowRecentlyPlayed(enabled: Boolean) {
         viewModelScope.launch { settingsRepository.setShowRecentlyPlayed(enabled) }
+    }
+
+    fun setDarkMode(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setDarkMode(enabled) }
     }
 
     fun updateSsId(value: String) = _uiState.update { it.copy(ssId = value, credentialValid = null) }

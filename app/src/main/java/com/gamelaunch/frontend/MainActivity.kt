@@ -58,7 +58,8 @@ class MainActivity : ComponentActivity() {
         requestAllFilesAccessIfNeeded()
 
         setContent {
-            AppTheme {
+            val darkMode by settingsRepository.darkMode.collectAsState(initial = false)
+            AppTheme(darkMode = darkMode) {
                 val navController = rememberNavController()
                 // Use null as initial so NavHost isn't created until we know the real value.
                 // With initial = true (old code) the NavHost always initialized at Settings,

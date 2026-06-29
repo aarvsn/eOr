@@ -34,6 +34,7 @@ class AppDataStore @Inject constructor(@ApplicationContext private val context: 
         val VIDEO_MUTED = booleanPreferencesKey("video_muted")
         val FIRST_LAUNCH = booleanPreferencesKey("first_launch")
         val SHOW_RECENTLY_PLAYED = booleanPreferencesKey("show_recently_played")
+        val DARK_MODE = booleanPreferencesKey("dark_mode")
     }
 
     val romRootPath: Flow<String> = context.dataStore.data.map { it[Keys.ROM_ROOT_PATH] ?: "" }
@@ -50,6 +51,7 @@ class AppDataStore @Inject constructor(@ApplicationContext private val context: 
     val videoMuted: Flow<Boolean> = context.dataStore.data.map { it[Keys.VIDEO_MUTED] ?: true }
     val isFirstLaunch: Flow<Boolean> = context.dataStore.data.map { it[Keys.FIRST_LAUNCH] ?: true }
     val showRecentlyPlayed: Flow<Boolean> = context.dataStore.data.map { it[Keys.SHOW_RECENTLY_PLAYED] ?: true }
+    val darkMode: Flow<Boolean> = context.dataStore.data.map { it[Keys.DARK_MODE] ?: false }
 
     suspend fun setRomRootPath(path: String) = context.dataStore.edit { it[Keys.ROM_ROOT_PATH] = path }
     suspend fun setMediaFolderPath(path: String) = context.dataStore.edit { it[Keys.MEDIA_FOLDER_PATH] = path }
@@ -67,4 +69,5 @@ class AppDataStore @Inject constructor(@ApplicationContext private val context: 
     suspend fun setVideoMuted(muted: Boolean) = context.dataStore.edit { it[Keys.VIDEO_MUTED] = muted }
     suspend fun setFirstLaunchComplete() = context.dataStore.edit { it[Keys.FIRST_LAUNCH] = false }
     suspend fun setShowRecentlyPlayed(enabled: Boolean) = context.dataStore.edit { it[Keys.SHOW_RECENTLY_PLAYED] = enabled }
+    suspend fun setDarkMode(enabled: Boolean) = context.dataStore.edit { it[Keys.DARK_MODE] = enabled }
 }

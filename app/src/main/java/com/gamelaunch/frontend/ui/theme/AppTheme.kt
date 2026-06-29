@@ -4,6 +4,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -63,10 +64,15 @@ private val GameTypography = Typography(
 )
 
 @Composable
-fun AppTheme(content: @Composable () -> Unit) {
-    MaterialTheme(
-        colorScheme = GameColorScheme,
-        typography  = GameTypography,
-        content     = content
-    )
+fun AppTheme(
+    darkMode: Boolean = false,
+    content: @Composable () -> Unit
+) {
+    CompositionLocalProvider(LocalDarkMode provides darkMode) {
+        MaterialTheme(
+            colorScheme = GameColorScheme,
+            typography  = GameTypography,
+            content     = content
+        )
+    }
 }

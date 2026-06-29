@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -17,6 +18,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.dp
+
+/** Provided at the root by AppTheme; read anywhere in the tree to choose light vs. dark colours. */
+val LocalDarkMode = compositionLocalOf { false }
 
 // ── Light, playful liquid-glass + 3DS palette ───────────────────────────────
 val LightBg   = Color(0xFFEDEFF4)   // very light cool grey base
@@ -41,16 +45,18 @@ fun tileColor(index: Int): Color = TilePalette[index % TilePalette.size]
 val BounceEasing = CubicBezierEasing(0.34f, 1.8f, 0.45f, 1f)
 const val BounceDurationMs = 420
 
-/** Soft pastel ambient over a light grey base — gentle colour washes for depth. */
+/** Ambient background — light pastels in light mode, dark navy glows in dark mode. */
 @Composable
 fun AmbientBackground(
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit
 ) {
+    val dark = LocalDarkMode.current
+    val bg = if (dark) NavyBg else LightBg
     Box(
         modifier
             .fillMaxSize()
-            .background(LightBg)
+            .background(bg)
             .drawBehind {
                 fun glow(color: Color, cx: Float, cy: Float, r: Float) = drawRect(
                     Brush.radialGradient(
@@ -59,10 +65,16 @@ fun AmbientBackground(
                         radius = size.minDimension * r
                     )
                 )
-                glow(Color(0xFF6FC4FF).copy(alpha = 0.22f), 0.08f, 0.02f, 0.95f)
-                glow(Color(0xFFB58CFF).copy(alpha = 0.20f), 0.98f, 0.08f, 1.05f)
-                glow(Color(0xFF59E0B8).copy(alpha = 0.16f), 0.55f, 1.05f, 1.05f)
-                glow(Color(0xFFFF9CC0).copy(alpha = 0.14f), 0.18f, 0.95f, 0.75f)
+                if (dark) {
+                    glow(Color(0xFF3D6FFF).copy(alpha = 0.18f), 0.08f, 0.02f, 0.95f)
+                    glow(Color(0xFF7B4FFF).copy(alpha = 0.15f), 0.98f, 0.08f, 1.05f)
+                    glow(Color(0xFF00CFFF).copy(alpha = 0.10f), 0.55f, 1.05f, 1.05f)
+                } else {
+                    glow(Color(0xFF6FC4FF).copy(alpha = 0.22f), 0.08f, 0.02f, 0.95f)
+                    glow(Color(0xFFB58CFF).copy(alpha = 0.20f), 0.98f, 0.08f, 1.05f)
+                    glow(Color(0xFF59E0B8).copy(alpha = 0.16f), 0.55f, 1.05f, 1.05f)
+                    glow(Color(0xFFFF9CC0).copy(alpha = 0.14f), 0.18f, 0.95f, 0.75f)
+                }
             },
         content = content
     )
@@ -102,32 +114,41 @@ fun Modifier.glassTile(
 }
 
 /**
- * Neutral frosted chip for tabs and icon buttons. Frosted white by default; an accent fill when
- * selected.
+ * Neutral frosted chip for tabs and icon buttons. Frosted white in light mode, frosted dark in
+ * dark mode; accent fill when selected.
  */
+@Composable
 fun Modifier.glassChip(
     shape: Shape,
     selected: Boolean = false,
     accent: Color = BrandBlue
-): Modifier = this
-    .shadow(
-        elevation = if (selected) 10.dp else 3.dp,
-        shape = shape,
-        ambientColor = if (selected) accent else Color(0xFF2A3550),
-        spotColor = if (selected) accent else Color(0xFF2A3550),
-        clip = false
-    )
-    .clip(shape)
-    .background(
-        Brush.verticalGradient(
-            if (selected) listOf(accent.copy(alpha = 0.95f), accent.copy(alpha = 0.78f))
-            else listOf(Color.White.copy(alpha = 0.72f), Color.White.copy(alpha = 0.48f))
+): Modifier {
+    val dark = LocalDarkMode.current
+    val unselectedGradient = if (dark)
+        listOf(Color.White.copy(alpha = 0.16f), Color.White.copy(alpha = 0.08f))
+    else
+        listOf(Color.White.copy(alpha = 0.72f), Color.White.copy(alpha = 0.48f))
+    val shadowColor = if (selected) accent else if (dark) Color(0xFF000820) else Color(0xFF2A3550)
+    return this
+        .shadow(
+            elevation = if (selected) 10.dp else 3.dp,
+            shape = shape,
+            ambientColor = shadowColor,
+            spotColor = shadowColor,
+            clip = false
         )
-    )
-    .border(
-        width = 1.dp,
-        brush = Brush.verticalGradient(
-            listOf(Color.White.copy(alpha = 0.9f), Color.White.copy(alpha = 0.3f))
-        ),
-        shape = shape
-    )
+        .clip(shape)
+        .background(
+            Brush.verticalGradient(
+                if (selected) listOf(accent.copy(alpha = 0.95f), accent.copy(alpha = 0.78f))
+                else unselectedGradient
+            )
+        )
+        .border(
+            width = 1.dp,
+            brush = Brush.verticalGradient(
+                listOf(Color.White.copy(alpha = 0.9f), Color.White.copy(alpha = 0.3f))
+            ),
+            shape = shape
+        )
+}

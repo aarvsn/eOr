@@ -49,6 +49,9 @@ import com.gamelaunch.frontend.ui.component.platformIcon
 import com.gamelaunch.frontend.ui.component.platformPadIcon
 import com.gamelaunch.frontend.ui.theme.BounceDurationMs
 import com.gamelaunch.frontend.ui.theme.BounceEasing
+import com.gamelaunch.frontend.ui.theme.IceWhite
+import com.gamelaunch.frontend.ui.theme.LocalDarkMode
+import com.gamelaunch.frontend.ui.theme.SteelGray
 import com.gamelaunch.frontend.ui.theme.TileSub
 import com.gamelaunch.frontend.ui.theme.TileText
 import com.gamelaunch.frontend.ui.theme.glassTile
@@ -65,8 +68,9 @@ fun SystemSelectionContent(
     modifier: Modifier = Modifier
 ) {
     if (platforms.isEmpty()) {
+        val darkMode = LocalDarkMode.current
         Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No systems configured", color = TileSub)
+            Text("No systems configured", color = if (darkMode) SteelGray else TileSub)
         }
         return
     }
@@ -212,6 +216,9 @@ private fun SystemCard(
         animationSpec = tween(durationMillis = BounceDurationMs, easing = BounceEasing),
         label = "systemTileScale"
     )
+    val darkMode = LocalDarkMode.current
+    val textPrimary = if (darkMode) IceWhite else TileText
+    val textSecondary = if (darkMode) SteelGray else TileSub
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -233,7 +240,7 @@ private fun SystemCard(
             Icon(
                 painter = painterResource(platformPadIcon(platformId)),
                 contentDescription = null,
-                tint = TileText,
+                tint = textPrimary,
                 modifier = Modifier.size(iconSize.dp)
             )
         }
@@ -242,7 +249,7 @@ private fun SystemCard(
             text = platformDisplayName(platformId),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.SemiBold,
-            color = TileText,
+            color = textPrimary,
             textAlign = TextAlign.Center,
             maxLines = 2
         )
@@ -250,7 +257,7 @@ private fun SystemCard(
         Text(
             text = "$count game${if (count == 1) "" else "s"}",
             style = MaterialTheme.typography.labelSmall,
-            color = TileSub
+            color = textSecondary
         )
     }
 }

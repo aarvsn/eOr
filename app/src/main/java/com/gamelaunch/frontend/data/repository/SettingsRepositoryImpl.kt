@@ -46,6 +46,7 @@ class SettingsRepositoryImpl @Inject constructor(
     override val videoMuted: Flow<Boolean> = dataStore.videoMuted
     override val isFirstLaunch: Flow<Boolean> = dataStore.isFirstLaunch
     override val showRecentlyPlayed: Flow<Boolean> = dataStore.showRecentlyPlayed
+    override val darkMode: Flow<Boolean> = dataStore.darkMode
 
     override suspend fun setRomRootPath(path: String) { dataStore.setRomRootPath(path) }
     override suspend fun setMediaFolderPath(path: String) { dataStore.setMediaFolderPath(path) }
@@ -73,4 +74,5 @@ class SettingsRepositoryImpl @Inject constructor(
     override suspend fun setVideoMuted(muted: Boolean) { dataStore.setVideoMuted(muted) }
     override suspend fun setFirstLaunchComplete() { dataStore.setFirstLaunchComplete() }
     override suspend fun setShowRecentlyPlayed(enabled: Boolean) { dataStore.setShowRecentlyPlayed(enabled) }
+    override suspend fun setDarkMode(enabled: Boolean) { dataStore.setDarkMode(enabled) }
 }
