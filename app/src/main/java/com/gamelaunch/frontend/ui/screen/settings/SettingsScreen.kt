@@ -4,6 +4,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,8 +24,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.FolderOpen
+import androidx.compose.material.icons.filled.PermMedia
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.VideogameAsset
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -49,12 +55,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -63,6 +74,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.gamelaunch.frontend.domain.usecase.EsdeImportStatus
 import com.gamelaunch.frontend.domain.usecase.LbSyncStatus
 import com.gamelaunch.frontend.ui.theme.ElectricBlue
+import com.gamelaunch.frontend.ui.theme.LayoutMode
 import com.gamelaunch.frontend.ui.theme.NavyBorder
 import com.gamelaunch.frontend.ui.theme.NavyCard
 import com.gamelaunch.frontend.ui.theme.NavySurface
@@ -70,6 +82,14 @@ import com.gamelaunch.frontend.ui.theme.NeonPurple
 import com.gamelaunch.frontend.util.StorageUtils
 
 private val gradientBrush = Brush.horizontalGradient(listOf(ElectricBlue, NeonPurple))
+
+private enum class SettingsTab(val label: String, val icon: ImageVector) {
+    GENERAL("General", Icons.Default.Tune),
+    MEDIA("Media", Icons.Default.PermMedia),
+    SCRAPER("Scraper", Icons.Default.CloudDownload),
+    EMULATORS("Emulators", Icons.Default.VideogameAsset),
+    RETRO_ACHIEVEMENTS("RetroAchievements", Icons.Default.EmojiEvents)
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,6 +105,8 @@ fun SettingsScreen(
     val state   by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val storageVolumes = remember { StorageUtils.getStorageVolumes(context) }
+
+    var selectedTab by rememberSaveable { mutableStateOf(SettingsTab.GENERAL) }
 
     LaunchedEffect(state.emulatorDetectResult) {
         state.emulatorDetectResult?.let { msg ->
@@ -143,13 +165,14 @@ fun SettingsScreen(
                     }
                 },
                 actions = {
-                    // Gradient "Go to Library" button
+                    // Gradient "Go to Library" button — also persists any typed ScreenScraper creds.
                     Box(
                         modifier = Modifier
                             .padding(end = 12.dp)
                             .clip(RoundedCornerShape(50))
                             .background(gradientBrush)
                             .clickable {
+                                viewModel.saveCredentials()
                                 viewModel.finishSetup()
                                 onGoToLibrary()
                             }
@@ -178,488 +201,569 @@ fun SettingsScreen(
             )
         }
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+        Column(Modifier.fillMaxSize().padding(paddingValues)) {
 
-            // ── ROM Library ────────────────────────────────────────────────
-            SettingsSectionHeader("ROM Library")
-            SettingsCard {
-                if (storageVolumes.size > 1) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.padding(bottom = 10.dp)
-                    ) {
-                        storageVolumes.forEach { (label, path) ->
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(NavyCard)
-                                    .clickable { viewModel.setRomRootPath(path) }
-                                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(label, style = MaterialTheme.typography.labelMedium, maxLines = 1)
-                            }
-                        }
-                    }
-                    CardDivider()
-                }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(top = if (storageVolumes.size > 1) 10.dp else 0.dp)
+            SettingsTabBar(selected = selectedTab, onSelect = { selectedTab = it })
+
+            // Fresh scroll state per tab so switching tabs starts at the top.
+            key(selectedTab) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    OutlinedTextField(
-                        value       = state.romRootPath.ifEmpty { "Not configured" },
-                        onValueChange = { viewModel.setRomRootPath(it) },
-                        label       = { Text("ROM Folder") },
-                        modifier    = Modifier.weight(1f),
-                        singleLine  = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor   = ElectricBlue,
-                            unfocusedBorderColor = NavyBorder
+                    when (selectedTab) {
+                        SettingsTab.GENERAL -> GeneralTab(
+                            state, viewModel, storageVolumes,
+                            onPickRomFolder = { folderPicker.launch(null) },
+                            onRescanClick = onRescanClick,
+                            onScrapeAllClick = onScrapeAllClick
                         )
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    IconButton(
-                        onClick  = { folderPicker.launch(null) },
-                        modifier = Modifier
-                            .size(48.dp)
-                            .background(NavyCard, RoundedCornerShape(10.dp))
-                    ) {
-                        Icon(Icons.Default.FolderOpen, contentDescription = "Browse", tint = ElectricBlue)
+                        SettingsTab.MEDIA -> MediaTab(
+                            state, viewModel,
+                            onPickMediaFolder = { mediaFolderPicker.launch(null) }
+                        )
+                        SettingsTab.SCRAPER -> ScraperTab(state, viewModel)
+                        SettingsTab.EMULATORS -> EmulatorsTab(state, viewModel, onEmulatorConfigClick)
+                        SettingsTab.RETRO_ACHIEVEMENTS -> RetroAchievementsTab(state, viewModel)
                     }
-                }
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    "Tip: for SD card use /storage/XXXX-XXXX/ROMs",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(Modifier.height(10.dp))
-                CardDivider()
-                Spacer(Modifier.height(10.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    GradientOutlineButton(
-                        text     = "Rescan ROMs",
-                        onClick  = onRescanClick,
-                        modifier = Modifier.weight(1f)
-                    )
-                    GradientFillButton(
-                        text     = "Scrape All",
-                        onClick  = onScrapeAllClick,
-                        modifier = Modifier.weight(1f)
-                    )
+                    Spacer(Modifier.height(24.dp))
                 }
             }
-
-            Spacer(Modifier.height(4.dp))
-
-            // ── Media Import ───────────────────────────────────────────────
-            SettingsSectionHeader("Media Import")
-            SettingsCard {
-                Text(
-                    "Point to your ES-DE downloaded_media folder to use art & videos you already scraped.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(Modifier.height(10.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    OutlinedTextField(
-                        value         = state.mediaFolderPath.ifEmpty { "Not configured" },
-                        onValueChange = { viewModel.setMediaFolderPath(it) },
-                        label         = { Text("Media Folder") },
-                        modifier      = Modifier.weight(1f),
-                        singleLine    = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor   = ElectricBlue,
-                            unfocusedBorderColor = NavyBorder
-                        )
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    IconButton(
-                        onClick  = { mediaFolderPicker.launch(null) },
-                        modifier = Modifier
-                            .size(48.dp)
-                            .background(NavyCard, RoundedCornerShape(10.dp))
-                    ) {
-                        Icon(Icons.Default.FolderOpen, contentDescription = "Browse", tint = ElectricBlue)
-                    }
-                }
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    "Tip: pick the downloaded_media folder or its parent ES-DE folder.",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(Modifier.height(10.dp))
-
-                val importing = state.esdeImportStatus is EsdeImportStatus.Scanning
-                GradientFillButton(
-                    text     = if (importing) "Importing…" else "Import Media",
-                    onClick  = { viewModel.importEsdeMedia() },
-                    enabled  = state.mediaFolderPath.isNotEmpty() && !importing,
-                    loading  = importing,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                when (val s = state.esdeImportStatus) {
-                    is EsdeImportStatus.Complete -> {
-                        Spacer(Modifier.height(6.dp))
-                        StatusRow(
-                            icon  = Icons.Default.Check,
-                            text  = "Imported ${s.matched} of ${s.total} games",
-                            color = ElectricBlue
-                        )
-                    }
-                    is EsdeImportStatus.Error -> {
-                        Spacer(Modifier.height(6.dp))
-                        StatusRow(
-                            icon  = Icons.Default.Close,
-                            text  = s.message,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                    else -> {}
-                }
-            }
-
-            Spacer(Modifier.height(4.dp))
-
-            // ── Artwork Database ───────────────────────────────────────────
-            SettingsSectionHeader("Artwork Database")
-            SettingsCard {
-                Text(
-                    "LaunchBox DB — box art & screenshots. ~190 MB, one-time download. No account needed.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(Modifier.height(10.dp))
-
-                val lbSyncing = state.lbSyncStatus is LbSyncStatus.Downloading ||
-                                state.lbSyncStatus is LbSyncStatus.Parsing
-
-                GradientFillButton(
-                    text     = if (lbSyncing) "Syncing…" else "Sync Artwork DB",
-                    onClick  = { viewModel.syncLaunchBox() },
-                    enabled  = !lbSyncing,
-                    modifier = Modifier.fillMaxWidth(),
-                    loading  = lbSyncing
-                )
-
-                when (val status = state.lbSyncStatus) {
-                    is LbSyncStatus.Downloading -> {
-                        Spacer(Modifier.height(8.dp))
-                        LinearProgressIndicator(
-                            modifier = Modifier.fillMaxWidth(),
-                            color    = ElectricBlue
-                        )
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            "Downloading database…",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    is LbSyncStatus.Parsing -> {
-                        Spacer(Modifier.height(8.dp))
-                        LinearProgressIndicator(
-                            modifier = Modifier.fillMaxWidth(),
-                            color    = NeonPurple
-                        )
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            "Parsing… ${"%,d".format(status.gamesIndexed)} games indexed",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    is LbSyncStatus.Complete -> {
-                        Spacer(Modifier.height(6.dp))
-                        StatusRow(
-                            icon  = Icons.Default.Check,
-                            text  = "Sync complete — ${"%,d".format(status.totalGames)} games",
-                            color = ElectricBlue
-                        )
-                    }
-                    is LbSyncStatus.Error -> {
-                        Spacer(Modifier.height(6.dp))
-                        StatusRow(
-                            icon  = Icons.Default.Close,
-                            text  = status.message,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                    null -> {
-                        if (state.lbGameCount > 0) {
-                            Spacer(Modifier.height(6.dp))
-                            Text(
-                                "${"%,d".format(state.lbGameCount)} games in local database",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                }
-            }
-
-            Spacer(Modifier.height(4.dp))
-
-            // ── ScreenScraper ──────────────────────────────────────────────
-            SettingsSectionHeader("ScreenScraper (Recommended)")
-            SettingsCard {
-                Text(
-                    "ScreenScraper is the default scraper — it provides the best box art, screenshots, wheel logos, and video previews. " +
-                    "Create a free account at screenscraper.fr, then enter your username and password below. " +
-                    "Without credentials the app falls back to libretro thumbnails and LaunchBox.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(Modifier.height(12.dp))
-                OutlinedTextField(
-                    value         = state.ssId,
-                    onValueChange = viewModel::updateSsId,
-                    label         = { Text("Username (ssid)") },
-                    modifier      = Modifier.fillMaxWidth(),
-                    singleLine    = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor   = ElectricBlue,
-                        unfocusedBorderColor = NavyBorder
-                    )
-                )
-                Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
-                    value                  = state.ssPassword,
-                    onValueChange          = viewModel::updateSsPassword,
-                    label                  = { Text("Password") },
-                    visualTransformation   = PasswordVisualTransformation(),
-                    modifier               = Modifier.fillMaxWidth(),
-                    singleLine             = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor   = ElectricBlue,
-                        unfocusedBorderColor = NavyBorder
-                    )
-                )
-                Spacer(Modifier.height(10.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    GradientOutlineButton(
-                        text    = "Save",
-                        onClick = { viewModel.saveCredentials() },
-                        modifier = Modifier.weight(1f)
-                    )
-                    GradientFillButton(
-                        text     = "Validate",
-                        onClick  = { viewModel.validateCredentials() },
-                        enabled  = !state.credentialValidating,
-                        loading  = state.credentialValidating,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                state.credentialValid?.let { valid ->
-                    Spacer(Modifier.height(8.dp))
-                    StatusRow(
-                        icon  = if (valid) Icons.Default.Check else Icons.Default.Close,
-                        text  = if (valid) "Credentials valid" else "Invalid credentials",
-                        color = if (valid) ElectricBlue else MaterialTheme.colorScheme.error
-                    )
-                }
-
-                Spacer(Modifier.height(12.dp))
-                CardDivider()
-                Spacer(Modifier.height(12.dp))
-
-                Text(
-                    "Scrape options",
-                    style      = MaterialTheme.typography.labelLarge,
-                    color      = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Spacer(Modifier.height(4.dp))
-                CardSwitchRow("Box Art",        state.scrapeBoxArt,        viewModel::setScrapeBoxArt)
-                CardSwitchRow("Screenshots",    state.scrapeScreenshots,   viewModel::setScrapeScreenshots)
-                CardSwitchRow("Wheel Logos",    state.scrapeWheelLogos,    viewModel::setScrapeWheelLogos)
-                CardSwitchRow("Video Previews", state.scrapeVideos,        viewModel::setScrapeVideos)
-            }
-
-            Spacer(Modifier.height(4.dp))
-
-            // ── Emulators ──────────────────────────────────────────────────
-            SettingsSectionHeader("Emulators")
-            SettingsCard {
-                GradientFillButton(
-                    text     = "Auto-detect Emulators",
-                    onClick  = { viewModel.autoDetectEmulators() },
-                    enabled  = !state.emulatorDetecting,
-                    loading  = state.emulatorDetecting,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(Modifier.height(8.dp))
-                GradientOutlineButton(
-                    text     = "Configure Emulators Manually",
-                    onClick  = onEmulatorConfigClick,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            Spacer(Modifier.height(4.dp))
-
-            // ── Android Games ──────────────────────────────────────────────
-            SettingsSectionHeader("Android Games")
-            SettingsCard {
-                Text(
-                    "Scan installed Android games (apps tagged as games) and add them to your library.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(Modifier.height(10.dp))
-                GradientFillButton(
-                    text     = "Scan Android Games",
-                    onClick  = { viewModel.scanAndroidGames() },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                state.androidScanResult?.let { result ->
-                    Spacer(Modifier.height(6.dp))
-                    StatusRow(
-                        icon  = Icons.Default.Check,
-                        text  = result,
-                        color = ElectricBlue
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(4.dp))
-
-            // ── Display ────────────────────────────────────────────────────
-            SettingsSectionHeader("Display")
-            SettingsCard {
-                CardSwitchRow(
-                    label     = "Carousel layout",
-                    checked   = state.layoutMode == com.gamelaunch.frontend.ui.theme.LayoutMode.CAROUSEL,
-                    onCheckedChange = {
-                        viewModel.setLayoutMode(
-                            if (it) com.gamelaunch.frontend.ui.theme.LayoutMode.CAROUSEL
-                            else    com.gamelaunch.frontend.ui.theme.LayoutMode.GRID
-                        )
-                    }
-                )
-                CardSwitchRow(
-                    label           = "Recently Played tab",
-                    checked         = state.showRecentlyPlayed,
-                    onCheckedChange = viewModel::setShowRecentlyPlayed
-                )
-                CardSwitchRow(
-                    label           = "Dark mode",
-                    checked         = state.darkMode,
-                    onCheckedChange = viewModel::setDarkMode
-                )
-            }
-
-            Spacer(Modifier.height(4.dp))
-
-            // ── RetroAchievements ──────────────────────────────────────────
-            SettingsSectionHeader("RetroAchievements")
-            SettingsCard {
-                Text(
-                    "Sign in with your RetroAchievements username and password to see your points and profile.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(Modifier.height(12.dp))
-                OutlinedTextField(
-                    value         = state.raUsername,
-                    onValueChange = viewModel::updateRaUsername,
-                    label         = { Text("Username") },
-                    modifier      = Modifier.fillMaxWidth(),
-                    singleLine    = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor   = ElectricBlue,
-                        unfocusedBorderColor = NavyBorder
-                    )
-                )
-                Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
-                    value                = state.raPassword,
-                    onValueChange        = viewModel::updateRaPassword,
-                    label                = { Text("Password") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier             = Modifier.fillMaxWidth(),
-                    singleLine           = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor   = ElectricBlue,
-                        unfocusedBorderColor = NavyBorder
-                    )
-                )
-                Spacer(Modifier.height(10.dp))
-                GradientFillButton(
-                    text     = if (state.raLoggedIn) "Update Sign-In" else "Sign In",
-                    onClick  = { viewModel.saveRaCredentials() },
-                    enabled  = !state.raLoggingIn,
-                    loading  = state.raLoggingIn,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                state.raLoginResult?.let { msg ->
-                    val ok = msg.startsWith("Signed in")
-                    Spacer(Modifier.height(8.dp))
-                    StatusRow(
-                        icon  = if (ok) Icons.Default.Check else Icons.Default.Close,
-                        text  = msg,
-                        color = if (ok) ElectricBlue else MaterialTheme.colorScheme.error
-                    )
-                }
-                if (state.raLoggedIn) {
-                    Spacer(Modifier.height(6.dp))
-                    GradientOutlineButton(
-                        text     = "Sign Out",
-                        onClick  = { viewModel.signOutRa() },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-
-                Spacer(Modifier.height(12.dp))
-                CardDivider()
-                Spacer(Modifier.height(12.dp))
-
-                Text(
-                    "Optional: add a Web API Key (retroachievements.org → Settings → Keys) to also see your rank and recently-played games with completion progress.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
-                    value                = state.raApiKey,
-                    onValueChange        = viewModel::updateRaApiKey,
-                    label                = { Text("Web API Key (optional)") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier             = Modifier.fillMaxWidth(),
-                    singleLine           = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor   = ElectricBlue,
-                        unfocusedBorderColor = NavyBorder
-                    )
-                )
-            }
-
-            Spacer(Modifier.height(16.dp))
-
-            // ── Save & Finish ──────────────────────────────────────────────
-            GradientFillButton(
-                text     = "Save & Go to Library",
-                modifier = Modifier.fillMaxWidth(),
-                onClick  = {
-                    viewModel.saveCredentials()
-                    viewModel.finishSetup()
-                    onGoToLibrary()
-                }
-            )
-
-            Spacer(Modifier.height(24.dp))
         }
+    }
+}
+
+@Composable
+private fun SettingsTabBar(selected: SettingsTab, onSelect: (SettingsTab) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        SettingsTab.entries.forEach { tab ->
+            val isSel = tab == selected
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .then(
+                        if (isSel) Modifier.background(gradientBrush)
+                        else Modifier.background(Color.White.copy(alpha = 0.07f))
+                    )
+                    .clickable { onSelect(tab) }
+                    .padding(horizontal = 14.dp, vertical = 9.dp)
+            ) {
+                Icon(
+                    tab.icon,
+                    contentDescription = null,
+                    tint = if (isSel) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(16.dp)
+                )
+                Text(
+                    tab.label,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (isSel) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = if (isSel) FontWeight.SemiBold else FontWeight.Normal
+                )
+            }
+        }
+    }
+}
+
+// ── Tab: General (ROM Library, Display, Android Games) ────────────────────
+
+@Composable
+private fun GeneralTab(
+    state: SettingsUiState,
+    viewModel: SettingsViewModel,
+    storageVolumes: List<Pair<String, String>>,
+    onPickRomFolder: () -> Unit,
+    onRescanClick: () -> Unit,
+    onScrapeAllClick: () -> Unit
+) {
+    // ── ROM Library ────────────────────────────────────────────────
+    SettingsSectionHeader("ROM Library")
+    SettingsCard {
+        if (storageVolumes.size > 1) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(bottom = 10.dp)
+            ) {
+                storageVolumes.forEach { (label, path) ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(NavyCard)
+                            .clickable { viewModel.setRomRootPath(path) }
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(label, style = MaterialTheme.typography.labelMedium, maxLines = 1)
+                    }
+                }
+            }
+            CardDivider()
+        }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(top = if (storageVolumes.size > 1) 10.dp else 0.dp)
+        ) {
+            OutlinedTextField(
+                value       = state.romRootPath.ifEmpty { "Not configured" },
+                onValueChange = { viewModel.setRomRootPath(it) },
+                label       = { Text("ROM Folder") },
+                modifier    = Modifier.weight(1f),
+                singleLine  = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor   = ElectricBlue,
+                    unfocusedBorderColor = NavyBorder
+                )
+            )
+            Spacer(Modifier.width(8.dp))
+            IconButton(
+                onClick  = onPickRomFolder,
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(NavyCard, RoundedCornerShape(10.dp))
+            ) {
+                Icon(Icons.Default.FolderOpen, contentDescription = "Browse", tint = ElectricBlue)
+            }
+        }
+        Spacer(Modifier.height(4.dp))
+        Text(
+            "Tip: for SD card use /storage/XXXX-XXXX/ROMs",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(10.dp))
+        CardDivider()
+        Spacer(Modifier.height(10.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            GradientOutlineButton(
+                text     = "Rescan ROMs",
+                onClick  = onRescanClick,
+                modifier = Modifier.weight(1f)
+            )
+            GradientFillButton(
+                text     = "Scrape All",
+                onClick  = onScrapeAllClick,
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+
+    Spacer(Modifier.height(4.dp))
+
+    // ── Display ────────────────────────────────────────────────────
+    SettingsSectionHeader("Display")
+    SettingsCard {
+        CardSwitchRow(
+            label     = "Carousel layout",
+            checked   = state.layoutMode == LayoutMode.CAROUSEL,
+            onCheckedChange = {
+                viewModel.setLayoutMode(if (it) LayoutMode.CAROUSEL else LayoutMode.GRID)
+            }
+        )
+        CardSwitchRow(
+            label           = "Recently Played tab",
+            checked         = state.showRecentlyPlayed,
+            onCheckedChange = viewModel::setShowRecentlyPlayed
+        )
+        CardSwitchRow(
+            label           = "Dark mode",
+            checked         = state.darkMode,
+            onCheckedChange = viewModel::setDarkMode
+        )
+    }
+
+    Spacer(Modifier.height(4.dp))
+
+    // ── Android Games ──────────────────────────────────────────────
+    SettingsSectionHeader("Android Games")
+    SettingsCard {
+        Text(
+            "Scan installed Android games (apps tagged as games) and add them to your library.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(10.dp))
+        GradientFillButton(
+            text     = "Scan Android Games",
+            onClick  = { viewModel.scanAndroidGames() },
+            modifier = Modifier.fillMaxWidth()
+        )
+        state.androidScanResult?.let { result ->
+            Spacer(Modifier.height(6.dp))
+            StatusRow(
+                icon  = Icons.Default.Check,
+                text  = result,
+                color = ElectricBlue
+            )
+        }
+    }
+}
+
+// ── Tab: Media (Media Import, Artwork Database) ───────────────────────────
+
+@Composable
+private fun MediaTab(
+    state: SettingsUiState,
+    viewModel: SettingsViewModel,
+    onPickMediaFolder: () -> Unit
+) {
+    // ── Media Import ───────────────────────────────────────────────
+    SettingsSectionHeader("Media Import")
+    SettingsCard {
+        Text(
+            "Point to your ES-DE downloaded_media folder to use art & videos you already scraped.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(10.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            OutlinedTextField(
+                value         = state.mediaFolderPath.ifEmpty { "Not configured" },
+                onValueChange = { viewModel.setMediaFolderPath(it) },
+                label         = { Text("Media Folder") },
+                modifier      = Modifier.weight(1f),
+                singleLine    = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor   = ElectricBlue,
+                    unfocusedBorderColor = NavyBorder
+                )
+            )
+            Spacer(Modifier.width(8.dp))
+            IconButton(
+                onClick  = onPickMediaFolder,
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(NavyCard, RoundedCornerShape(10.dp))
+            ) {
+                Icon(Icons.Default.FolderOpen, contentDescription = "Browse", tint = ElectricBlue)
+            }
+        }
+        Spacer(Modifier.height(4.dp))
+        Text(
+            "Tip: pick the downloaded_media folder or its parent ES-DE folder.",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(10.dp))
+
+        val importing = state.esdeImportStatus is EsdeImportStatus.Scanning
+        GradientFillButton(
+            text     = if (importing) "Importing…" else "Import Media",
+            onClick  = { viewModel.importEsdeMedia() },
+            enabled  = state.mediaFolderPath.isNotEmpty() && !importing,
+            loading  = importing,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        when (val s = state.esdeImportStatus) {
+            is EsdeImportStatus.Complete -> {
+                Spacer(Modifier.height(6.dp))
+                StatusRow(
+                    icon  = Icons.Default.Check,
+                    text  = "Imported ${s.matched} of ${s.total} games",
+                    color = ElectricBlue
+                )
+            }
+            is EsdeImportStatus.Error -> {
+                Spacer(Modifier.height(6.dp))
+                StatusRow(
+                    icon  = Icons.Default.Close,
+                    text  = s.message,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+            else -> {}
+        }
+    }
+
+    Spacer(Modifier.height(4.dp))
+
+    // ── Artwork Database ───────────────────────────────────────────
+    SettingsSectionHeader("Artwork Database")
+    SettingsCard {
+        Text(
+            "LaunchBox DB — box art & screenshots. ~190 MB, one-time download. No account needed.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(10.dp))
+
+        val lbSyncing = state.lbSyncStatus is LbSyncStatus.Downloading ||
+                        state.lbSyncStatus is LbSyncStatus.Parsing
+
+        GradientFillButton(
+            text     = if (lbSyncing) "Syncing…" else "Sync Artwork DB",
+            onClick  = { viewModel.syncLaunchBox() },
+            enabled  = !lbSyncing,
+            modifier = Modifier.fillMaxWidth(),
+            loading  = lbSyncing
+        )
+
+        when (val status = state.lbSyncStatus) {
+            is LbSyncStatus.Downloading -> {
+                Spacer(Modifier.height(8.dp))
+                LinearProgressIndicator(
+                    modifier = Modifier.fillMaxWidth(),
+                    color    = ElectricBlue
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    "Downloading database…",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            is LbSyncStatus.Parsing -> {
+                Spacer(Modifier.height(8.dp))
+                LinearProgressIndicator(
+                    modifier = Modifier.fillMaxWidth(),
+                    color    = NeonPurple
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    "Parsing… ${"%,d".format(status.gamesIndexed)} games indexed",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            is LbSyncStatus.Complete -> {
+                Spacer(Modifier.height(6.dp))
+                StatusRow(
+                    icon  = Icons.Default.Check,
+                    text  = "Sync complete — ${"%,d".format(status.totalGames)} games",
+                    color = ElectricBlue
+                )
+            }
+            is LbSyncStatus.Error -> {
+                Spacer(Modifier.height(6.dp))
+                StatusRow(
+                    icon  = Icons.Default.Close,
+                    text  = status.message,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+            null -> {
+                if (state.lbGameCount > 0) {
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        "${"%,d".format(state.lbGameCount)} games in local database",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
+// ── Tab: Scraper (ScreenScraper) ──────────────────────────────────────────
+
+@Composable
+private fun ScraperTab(state: SettingsUiState, viewModel: SettingsViewModel) {
+    SettingsSectionHeader("ScreenScraper (Recommended)")
+    SettingsCard {
+        Text(
+            "ScreenScraper is the default scraper — it provides the best box art, screenshots, wheel logos, and video previews. " +
+            "Create a free account at screenscraper.fr, then enter your username and password below. " +
+            "Without credentials the app falls back to libretro thumbnails and LaunchBox.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(12.dp))
+        OutlinedTextField(
+            value         = state.ssId,
+            onValueChange = viewModel::updateSsId,
+            label         = { Text("Username (ssid)") },
+            modifier      = Modifier.fillMaxWidth(),
+            singleLine    = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor   = ElectricBlue,
+                unfocusedBorderColor = NavyBorder
+            )
+        )
+        Spacer(Modifier.height(8.dp))
+        OutlinedTextField(
+            value                  = state.ssPassword,
+            onValueChange          = viewModel::updateSsPassword,
+            label                  = { Text("Password") },
+            visualTransformation   = PasswordVisualTransformation(),
+            modifier               = Modifier.fillMaxWidth(),
+            singleLine             = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor   = ElectricBlue,
+                unfocusedBorderColor = NavyBorder
+            )
+        )
+        Spacer(Modifier.height(10.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            GradientOutlineButton(
+                text    = "Save",
+                onClick = { viewModel.saveCredentials() },
+                modifier = Modifier.weight(1f)
+            )
+            GradientFillButton(
+                text     = "Validate",
+                onClick  = { viewModel.validateCredentials() },
+                enabled  = !state.credentialValidating,
+                loading  = state.credentialValidating,
+                modifier = Modifier.weight(1f)
+            )
+        }
+        state.credentialValid?.let { valid ->
+            Spacer(Modifier.height(8.dp))
+            StatusRow(
+                icon  = if (valid) Icons.Default.Check else Icons.Default.Close,
+                text  = if (valid) "Credentials valid" else "Invalid credentials",
+                color = if (valid) ElectricBlue else MaterialTheme.colorScheme.error
+            )
+        }
+
+        Spacer(Modifier.height(12.dp))
+        CardDivider()
+        Spacer(Modifier.height(12.dp))
+
+        Text(
+            "Scrape options",
+            style      = MaterialTheme.typography.labelLarge,
+            color      = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.SemiBold
+        )
+        Spacer(Modifier.height(4.dp))
+        CardSwitchRow("Box Art",        state.scrapeBoxArt,        viewModel::setScrapeBoxArt)
+        CardSwitchRow("Screenshots",    state.scrapeScreenshots,   viewModel::setScrapeScreenshots)
+        CardSwitchRow("Wheel Logos",    state.scrapeWheelLogos,    viewModel::setScrapeWheelLogos)
+        CardSwitchRow("Video Previews", state.scrapeVideos,        viewModel::setScrapeVideos)
+    }
+}
+
+// ── Tab: Emulators ────────────────────────────────────────────────────────
+
+@Composable
+private fun EmulatorsTab(
+    state: SettingsUiState,
+    viewModel: SettingsViewModel,
+    onEmulatorConfigClick: () -> Unit
+) {
+    SettingsSectionHeader("Emulators")
+    SettingsCard {
+        Text(
+            "Auto-detect maps installed emulators to your platforms, or configure each one manually.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(10.dp))
+        GradientFillButton(
+            text     = "Auto-detect Emulators",
+            onClick  = { viewModel.autoDetectEmulators() },
+            enabled  = !state.emulatorDetecting,
+            loading  = state.emulatorDetecting,
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(Modifier.height(8.dp))
+        GradientOutlineButton(
+            text     = "Configure Emulators Manually",
+            onClick  = onEmulatorConfigClick,
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+// ── Tab: RetroAchievements ────────────────────────────────────────────────
+
+@Composable
+private fun RetroAchievementsTab(state: SettingsUiState, viewModel: SettingsViewModel) {
+    SettingsSectionHeader("RetroAchievements")
+    SettingsCard {
+        Text(
+            "Sign in with your RetroAchievements username and password to see your points and profile.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(12.dp))
+        OutlinedTextField(
+            value         = state.raUsername,
+            onValueChange = viewModel::updateRaUsername,
+            label         = { Text("Username") },
+            modifier      = Modifier.fillMaxWidth(),
+            singleLine    = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor   = ElectricBlue,
+                unfocusedBorderColor = NavyBorder
+            )
+        )
+        Spacer(Modifier.height(8.dp))
+        OutlinedTextField(
+            value                = state.raPassword,
+            onValueChange        = viewModel::updateRaPassword,
+            label                = { Text("Password") },
+            visualTransformation = PasswordVisualTransformation(),
+            modifier             = Modifier.fillMaxWidth(),
+            singleLine           = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor   = ElectricBlue,
+                unfocusedBorderColor = NavyBorder
+            )
+        )
+        Spacer(Modifier.height(10.dp))
+        GradientFillButton(
+            text     = if (state.raLoggedIn) "Update Sign-In" else "Sign In",
+            onClick  = { viewModel.saveRaCredentials() },
+            enabled  = !state.raLoggingIn,
+            loading  = state.raLoggingIn,
+            modifier = Modifier.fillMaxWidth()
+        )
+        state.raLoginResult?.let { msg ->
+            val ok = msg.startsWith("Signed in")
+            Spacer(Modifier.height(8.dp))
+            StatusRow(
+                icon  = if (ok) Icons.Default.Check else Icons.Default.Close,
+                text  = msg,
+                color = if (ok) ElectricBlue else MaterialTheme.colorScheme.error
+            )
+        }
+        if (state.raLoggedIn) {
+            Spacer(Modifier.height(6.dp))
+            GradientOutlineButton(
+                text     = "Sign Out",
+                onClick  = { viewModel.signOutRa() },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        Spacer(Modifier.height(12.dp))
+        CardDivider()
+        Spacer(Modifier.height(12.dp))
+
+        Text(
+            "Optional: add a Web API Key (retroachievements.org → Settings → Keys) to also see your rank and recently-played games with completion progress.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(8.dp))
+        OutlinedTextField(
+            value                = state.raApiKey,
+            onValueChange        = viewModel::updateRaApiKey,
+            label                = { Text("Web API Key (optional)") },
+            visualTransformation = PasswordVisualTransformation(),
+            modifier             = Modifier.fillMaxWidth(),
+            singleLine           = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor   = ElectricBlue,
+                unfocusedBorderColor = NavyBorder
+            )
+        )
     }
 }
 
@@ -783,7 +887,7 @@ private fun GradientOutlineButton(
 
 @Composable
 private fun StatusRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     text: String,
     color: Color
 ) {
