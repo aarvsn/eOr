@@ -24,7 +24,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.FolderOpen
@@ -86,8 +85,7 @@ private val gradientBrush = Brush.horizontalGradient(listOf(ElectricBlue, NeonPu
 private enum class SettingsTab(val label: String, val icon: ImageVector) {
     GENERAL("General", Icons.Default.Tune),
     MEDIA("Media", Icons.Default.PermMedia),
-    SCRAPER("Scraper", Icons.Default.CloudDownload),
-    EMULATORS("Emulators", Icons.Default.VideogameAsset),
+    GAMES("Games", Icons.Default.VideogameAsset),
     RETRO_ACHIEVEMENTS("RetroAchievements", Icons.Default.EmojiEvents)
 }
 
@@ -215,19 +213,29 @@ fun SettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     when (selectedTab) {
-                        SettingsTab.GENERAL -> GeneralTab(
-                            state, viewModel, storageVolumes,
-                            onPickRomFolder = { folderPicker.launch(null) },
-                            onRescanClick = onRescanClick,
-                            onScrapeAllClick = onScrapeAllClick
-                        )
-                        SettingsTab.MEDIA -> MediaTab(
-                            state, viewModel,
-                            onPickMediaFolder = { mediaFolderPicker.launch(null) }
-                        )
-                        SettingsTab.SCRAPER -> ScraperTab(state, viewModel, onScrapeAllClick)
-                        SettingsTab.EMULATORS -> EmulatorsTab(state, viewModel, onEmulatorConfigClick)
-                        SettingsTab.RETRO_ACHIEVEMENTS -> RetroAchievementsTab(state, viewModel)
+                        SettingsTab.GENERAL -> {
+                            DisplaySection(state, viewModel)
+                        }
+                        SettingsTab.MEDIA -> {
+                            ScreenScraperSection(state, viewModel, onScrapeAllClick)
+                            Spacer(Modifier.height(4.dp))
+                            ArtworkDatabaseSection(state, viewModel)
+                            Spacer(Modifier.height(4.dp))
+                            MediaImportSection(state, viewModel, onPickMediaFolder = { mediaFolderPicker.launch(null) })
+                        }
+                        SettingsTab.GAMES -> {
+                            RomLibrarySection(
+                                state, viewModel, storageVolumes,
+                                onPickRomFolder = { folderPicker.launch(null) },
+                                onRescanClick = onRescanClick,
+                                onScrapeAllClick = onScrapeAllClick
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            AndroidGamesSection(state, viewModel)
+                            Spacer(Modifier.height(4.dp))
+                            EmulatorsSection(state, viewModel, onEmulatorConfigClick)
+                        }
+                        SettingsTab.RETRO_ACHIEVEMENTS -> RetroAchievementsSection(state, viewModel)
                     }
                     Spacer(Modifier.height(24.dp))
                 }
@@ -277,10 +285,36 @@ private fun SettingsTabBar(selected: SettingsTab, onSelect: (SettingsTab) -> Uni
     }
 }
 
-// ── Tab: General (ROM Library, Display, Android Games) ────────────────────
+// ── Section: Display ──────────────────────────────────────────────────────
 
 @Composable
-private fun GeneralTab(
+private fun DisplaySection(state: SettingsUiState, viewModel: SettingsViewModel) {
+    SettingsSectionHeader("Display")
+    SettingsCard {
+        CardSwitchRow(
+            label     = "Carousel layout",
+            checked   = state.layoutMode == LayoutMode.CAROUSEL,
+            onCheckedChange = {
+                viewModel.setLayoutMode(if (it) LayoutMode.CAROUSEL else LayoutMode.GRID)
+            }
+        )
+        CardSwitchRow(
+            label           = "Recently Played tab",
+            checked         = state.showRecentlyPlayed,
+            onCheckedChange = viewModel::setShowRecentlyPlayed
+        )
+        CardSwitchRow(
+            label           = "Dark mode",
+            checked         = state.darkMode,
+            onCheckedChange = viewModel::setDarkMode
+        )
+    }
+}
+
+// ── Section: ROM Library ──────────────────────────────────────────────────
+
+@Composable
+private fun RomLibrarySection(
     state: SettingsUiState,
     viewModel: SettingsViewModel,
     storageVolumes: List<Pair<String, String>>,
@@ -288,7 +322,6 @@ private fun GeneralTab(
     onRescanClick: () -> Unit,
     onScrapeAllClick: () -> Unit
 ) {
-    // ── ROM Library ────────────────────────────────────────────────
     SettingsSectionHeader("ROM Library")
     SettingsCard {
         if (storageVolumes.size > 1) {
@@ -359,34 +392,12 @@ private fun GeneralTab(
             )
         }
     }
+}
 
-    Spacer(Modifier.height(4.dp))
+// ── Section: Android Games ────────────────────────────────────────────────
 
-    // ── Display ────────────────────────────────────────────────────
-    SettingsSectionHeader("Display")
-    SettingsCard {
-        CardSwitchRow(
-            label     = "Carousel layout",
-            checked   = state.layoutMode == LayoutMode.CAROUSEL,
-            onCheckedChange = {
-                viewModel.setLayoutMode(if (it) LayoutMode.CAROUSEL else LayoutMode.GRID)
-            }
-        )
-        CardSwitchRow(
-            label           = "Recently Played tab",
-            checked         = state.showRecentlyPlayed,
-            onCheckedChange = viewModel::setShowRecentlyPlayed
-        )
-        CardSwitchRow(
-            label           = "Dark mode",
-            checked         = state.darkMode,
-            onCheckedChange = viewModel::setDarkMode
-        )
-    }
-
-    Spacer(Modifier.height(4.dp))
-
-    // ── Android Games ──────────────────────────────────────────────
+@Composable
+private fun AndroidGamesSection(state: SettingsUiState, viewModel: SettingsViewModel) {
     SettingsSectionHeader("Android Games")
     SettingsCard {
         Text(
@@ -411,167 +422,42 @@ private fun GeneralTab(
     }
 }
 
-// ── Tab: Media (Media Import, Artwork Database) ───────────────────────────
+// ── Section: Emulators ────────────────────────────────────────────────────
 
 @Composable
-private fun MediaTab(
+private fun EmulatorsSection(
     state: SettingsUiState,
     viewModel: SettingsViewModel,
-    onPickMediaFolder: () -> Unit
+    onEmulatorConfigClick: () -> Unit
 ) {
-    // ── Media Import ───────────────────────────────────────────────
-    SettingsSectionHeader("Media Import")
+    SettingsSectionHeader("Emulators")
     SettingsCard {
         Text(
-            "Point to your ES-DE downloaded_media folder to use art & videos you already scraped.",
+            "Auto-detect maps installed emulators to your platforms, or configure each one manually.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(Modifier.height(10.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(
-                value         = state.mediaFolderPath.ifEmpty { "Not configured" },
-                onValueChange = { viewModel.setMediaFolderPath(it) },
-                label         = { Text("Media Folder") },
-                modifier      = Modifier.weight(1f),
-                singleLine    = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor   = ElectricBlue,
-                    unfocusedBorderColor = NavyBorder
-                )
-            )
-            Spacer(Modifier.width(8.dp))
-            IconButton(
-                onClick  = onPickMediaFolder,
-                modifier = Modifier
-                    .size(48.dp)
-                    .background(NavyCard, RoundedCornerShape(10.dp))
-            ) {
-                Icon(Icons.Default.FolderOpen, contentDescription = "Browse", tint = ElectricBlue)
-            }
-        }
-        Spacer(Modifier.height(4.dp))
-        Text(
-            "Tip: pick the downloaded_media folder or its parent ES-DE folder.",
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(Modifier.height(10.dp))
-
-        val importing = state.esdeImportStatus is EsdeImportStatus.Scanning
         GradientFillButton(
-            text     = if (importing) "Importing…" else "Import Media",
-            onClick  = { viewModel.importEsdeMedia() },
-            enabled  = state.mediaFolderPath.isNotEmpty() && !importing,
-            loading  = importing,
+            text     = "Auto-detect Emulators",
+            onClick  = { viewModel.autoDetectEmulators() },
+            enabled  = !state.emulatorDetecting,
+            loading  = state.emulatorDetecting,
             modifier = Modifier.fillMaxWidth()
         )
-
-        when (val s = state.esdeImportStatus) {
-            is EsdeImportStatus.Complete -> {
-                Spacer(Modifier.height(6.dp))
-                StatusRow(
-                    icon  = Icons.Default.Check,
-                    text  = "Imported ${s.matched} of ${s.total} games",
-                    color = ElectricBlue
-                )
-            }
-            is EsdeImportStatus.Error -> {
-                Spacer(Modifier.height(6.dp))
-                StatusRow(
-                    icon  = Icons.Default.Close,
-                    text  = s.message,
-                    color = MaterialTheme.colorScheme.error
-                )
-            }
-            else -> {}
-        }
-    }
-
-    Spacer(Modifier.height(4.dp))
-
-    // ── Artwork Database ───────────────────────────────────────────
-    SettingsSectionHeader("Artwork Database")
-    SettingsCard {
-        Text(
-            "LaunchBox DB — box art & screenshots. ~190 MB, one-time download. No account needed.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+        Spacer(Modifier.height(8.dp))
+        GradientOutlineButton(
+            text     = "Configure Emulators Manually",
+            onClick  = onEmulatorConfigClick,
+            modifier = Modifier.fillMaxWidth()
         )
-        Spacer(Modifier.height(10.dp))
-
-        val lbSyncing = state.lbSyncStatus is LbSyncStatus.Downloading ||
-                        state.lbSyncStatus is LbSyncStatus.Parsing
-
-        GradientFillButton(
-            text     = if (lbSyncing) "Syncing…" else "Sync Artwork DB",
-            onClick  = { viewModel.syncLaunchBox() },
-            enabled  = !lbSyncing,
-            modifier = Modifier.fillMaxWidth(),
-            loading  = lbSyncing
-        )
-
-        when (val status = state.lbSyncStatus) {
-            is LbSyncStatus.Downloading -> {
-                Spacer(Modifier.height(8.dp))
-                LinearProgressIndicator(
-                    modifier = Modifier.fillMaxWidth(),
-                    color    = ElectricBlue
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    "Downloading database…",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            is LbSyncStatus.Parsing -> {
-                Spacer(Modifier.height(8.dp))
-                LinearProgressIndicator(
-                    modifier = Modifier.fillMaxWidth(),
-                    color    = NeonPurple
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    "Parsing… ${"%,d".format(status.gamesIndexed)} games indexed",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            is LbSyncStatus.Complete -> {
-                Spacer(Modifier.height(6.dp))
-                StatusRow(
-                    icon  = Icons.Default.Check,
-                    text  = "Sync complete — ${"%,d".format(status.totalGames)} games",
-                    color = ElectricBlue
-                )
-            }
-            is LbSyncStatus.Error -> {
-                Spacer(Modifier.height(6.dp))
-                StatusRow(
-                    icon  = Icons.Default.Close,
-                    text  = status.message,
-                    color = MaterialTheme.colorScheme.error
-                )
-            }
-            null -> {
-                if (state.lbGameCount > 0) {
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        "${"%,d".format(state.lbGameCount)} games in local database",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
     }
 }
 
-// ── Tab: Scraper (ScreenScraper) ──────────────────────────────────────────
+// ── Section: ScreenScraper ────────────────────────────────────────────────
 
 @Composable
-private fun ScraperTab(
+private fun ScreenScraperSection(
     state: SettingsUiState,
     viewModel: SettingsViewModel,
     onScrapeAllClick: () -> Unit
@@ -669,42 +555,168 @@ private fun ScraperTab(
     }
 }
 
-// ── Tab: Emulators ────────────────────────────────────────────────────────
+// ── Section: Artwork Database ─────────────────────────────────────────────
 
 @Composable
-private fun EmulatorsTab(
-    state: SettingsUiState,
-    viewModel: SettingsViewModel,
-    onEmulatorConfigClick: () -> Unit
-) {
-    SettingsSectionHeader("Emulators")
+private fun ArtworkDatabaseSection(state: SettingsUiState, viewModel: SettingsViewModel) {
+    SettingsSectionHeader("Artwork Database")
     SettingsCard {
         Text(
-            "Auto-detect maps installed emulators to your platforms, or configure each one manually.",
+            "LaunchBox DB — box art & screenshots. ~190 MB, one-time download. No account needed.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(Modifier.height(10.dp))
+
+        val lbSyncing = state.lbSyncStatus is LbSyncStatus.Downloading ||
+                        state.lbSyncStatus is LbSyncStatus.Parsing
+
         GradientFillButton(
-            text     = "Auto-detect Emulators",
-            onClick  = { viewModel.autoDetectEmulators() },
-            enabled  = !state.emulatorDetecting,
-            loading  = state.emulatorDetecting,
-            modifier = Modifier.fillMaxWidth()
+            text     = if (lbSyncing) "Syncing…" else "Sync Artwork DB",
+            onClick  = { viewModel.syncLaunchBox() },
+            enabled  = !lbSyncing,
+            modifier = Modifier.fillMaxWidth(),
+            loading  = lbSyncing
         )
-        Spacer(Modifier.height(8.dp))
-        GradientOutlineButton(
-            text     = "Configure Emulators Manually",
-            onClick  = onEmulatorConfigClick,
-            modifier = Modifier.fillMaxWidth()
-        )
+
+        when (val status = state.lbSyncStatus) {
+            is LbSyncStatus.Downloading -> {
+                Spacer(Modifier.height(8.dp))
+                LinearProgressIndicator(
+                    modifier = Modifier.fillMaxWidth(),
+                    color    = ElectricBlue
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    "Downloading database…",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            is LbSyncStatus.Parsing -> {
+                Spacer(Modifier.height(8.dp))
+                LinearProgressIndicator(
+                    modifier = Modifier.fillMaxWidth(),
+                    color    = NeonPurple
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    "Parsing… ${"%,d".format(status.gamesIndexed)} games indexed",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            is LbSyncStatus.Complete -> {
+                Spacer(Modifier.height(6.dp))
+                StatusRow(
+                    icon  = Icons.Default.Check,
+                    text  = "Sync complete — ${"%,d".format(status.totalGames)} games",
+                    color = ElectricBlue
+                )
+            }
+            is LbSyncStatus.Error -> {
+                Spacer(Modifier.height(6.dp))
+                StatusRow(
+                    icon  = Icons.Default.Close,
+                    text  = status.message,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+            null -> {
+                if (state.lbGameCount > 0) {
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        "${"%,d".format(state.lbGameCount)} games in local database",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
     }
 }
 
-// ── Tab: RetroAchievements ────────────────────────────────────────────────
+// ── Section: Media Import ─────────────────────────────────────────────────
 
 @Composable
-private fun RetroAchievementsTab(state: SettingsUiState, viewModel: SettingsViewModel) {
+private fun MediaImportSection(
+    state: SettingsUiState,
+    viewModel: SettingsViewModel,
+    onPickMediaFolder: () -> Unit
+) {
+    SettingsSectionHeader("Media Import")
+    SettingsCard {
+        Text(
+            "Point to your ES-DE downloaded_media folder to use art & videos you already scraped.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(10.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            OutlinedTextField(
+                value         = state.mediaFolderPath.ifEmpty { "Not configured" },
+                onValueChange = { viewModel.setMediaFolderPath(it) },
+                label         = { Text("Media Folder") },
+                modifier      = Modifier.weight(1f),
+                singleLine    = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor   = ElectricBlue,
+                    unfocusedBorderColor = NavyBorder
+                )
+            )
+            Spacer(Modifier.width(8.dp))
+            IconButton(
+                onClick  = onPickMediaFolder,
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(NavyCard, RoundedCornerShape(10.dp))
+            ) {
+                Icon(Icons.Default.FolderOpen, contentDescription = "Browse", tint = ElectricBlue)
+            }
+        }
+        Spacer(Modifier.height(4.dp))
+        Text(
+            "Tip: pick the downloaded_media folder or its parent ES-DE folder.",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(10.dp))
+
+        val importing = state.esdeImportStatus is EsdeImportStatus.Scanning
+        GradientFillButton(
+            text     = if (importing) "Importing…" else "Import Media",
+            onClick  = { viewModel.importEsdeMedia() },
+            enabled  = state.mediaFolderPath.isNotEmpty() && !importing,
+            loading  = importing,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        when (val s = state.esdeImportStatus) {
+            is EsdeImportStatus.Complete -> {
+                Spacer(Modifier.height(6.dp))
+                StatusRow(
+                    icon  = Icons.Default.Check,
+                    text  = "Imported ${s.matched} of ${s.total} games",
+                    color = ElectricBlue
+                )
+            }
+            is EsdeImportStatus.Error -> {
+                Spacer(Modifier.height(6.dp))
+                StatusRow(
+                    icon  = Icons.Default.Close,
+                    text  = s.message,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+            else -> {}
+        }
+    }
+}
+
+// ── Section: RetroAchievements ────────────────────────────────────────────
+
+@Composable
+private fun RetroAchievementsSection(state: SettingsUiState, viewModel: SettingsViewModel) {
     SettingsSectionHeader("RetroAchievements")
     SettingsCard {
         Text(
