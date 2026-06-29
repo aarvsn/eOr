@@ -141,7 +141,7 @@ fun ScrapeProgressScreen(
                 LazyColumn {
                     items(batch.results.takeLast(50)) { result ->
                         val (icon, label) = when (result) {
-                            is ScrapeResult.Success -> Icons.Default.Check to "Scraped"
+                            is ScrapeResult.Success -> Icons.Default.Check to "Scraped: ${result.title}"
                             is ScrapeResult.NotFound -> Icons.Default.Close to "Not found: ${result.romName}"
                             is ScrapeResult.RateLimited -> Icons.Default.HourglassEmpty to "Rate limited, retrying…"
                             is ScrapeResult.Error -> Icons.Default.Close to "Error: ${result.cause.message}"

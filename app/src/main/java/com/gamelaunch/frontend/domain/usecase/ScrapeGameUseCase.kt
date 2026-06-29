@@ -11,7 +11,7 @@ import com.gamelaunch.frontend.domain.repository.ScraperRepository
 import javax.inject.Inject
 
 sealed class ScrapeResult {
-    data class Success(val gameId: Long) : ScrapeResult()
+    data class Success(val gameId: Long, val title: String) : ScrapeResult()
     data class NotFound(val gameId: Long, val romName: String) : ScrapeResult()
     data class RateLimited(val gameId: Long) : ScrapeResult()
     data class Error(val gameId: Long, val cause: Throwable) : ScrapeResult()
@@ -43,18 +43,21 @@ class ScrapeGameUseCase @Inject constructor(
             ssResult.onSuccess { gameInfo ->
                 // When metadata scraping is off, keep the existing title and don't overwrite
                 // description/genre/year/rating — only the media below is fetched.
-                if (config.scrapeMetadata) {
+                val scrapedTitle = if (config.scrapeMetadata) {
+                    val title = gameInfo.getBestName(config.preferredRegion) ?: game.title
                     gameRepository.updateScrapedMetadata(
                         gameId        = game.id,
                         scraperGameId = gameInfo.id?.toLongOrNull(),
-                        title         = gameInfo.getBestName(config.preferredRegion) ?: game.title,
+                        title         = title,
                         description   = gameInfo.getBestSynopsis(config.preferredRegion),
                         genre         = gameInfo.getPrimaryGenre(),
                         releaseYear   = gameInfo.getReleaseYear(config.preferredRegion),
                         rating        = gameInfo.getRating()
                     )
+                    title
                 } else {
                     gameRepository.markScraped(game.id, game.title)
+                    game.title
                 }
                 val media = GameMedia(
                     gameId             = game.id,
@@ -72,7 +75,7 @@ class ScrapeGameUseCase @Inject constructor(
                 media.screenshotRemoteUrl?.let { mediaRepository.downloadAndCacheScreenshot(game.id, it) }
                 media.wheelLogoRemoteUrl?.let  { mediaRepository.downloadAndCacheWheelLogo(game.id, it) }
                 media.videoRemoteUrl?.let      { mediaRepository.downloadAndCacheVideo(game.id, it) }
-                return ScrapeResult.Success(game.id)
+                return ScrapeResult.Success(game.id, scrapedTitle)
             }
 
             // Only a rate-limit stops the batch; any other ScreenScraper failure
@@ -100,7 +103,7 @@ class ScrapeGameUseCase @Inject constructor(
                 gameId = game.id, scraperGameId = null, title = game.title,
                 description = null, genre = null, releaseYear = null, rating = null
             )
-            return ScrapeResult.Success(game.id)
+            return ScrapeResult.Success(game.id, game.title)
         }
 
         // ── LaunchBox fallback ───────────────────────────────────────────
@@ -131,7 +134,7 @@ class ScrapeGameUseCase @Inject constructor(
             lbMedia.boxFrontUrl?.let     { mediaRepository.downloadAndCacheBoxArt(game.id, it) }
             lbMedia.screenshotUrl?.let   { mediaRepository.downloadAndCacheScreenshot(game.id, it) }
             lbMedia.logoUrl?.let         { mediaRepository.downloadAndCacheWheelLogo(game.id, it) }
-            return ScrapeResult.Success(game.id)
+            return ScrapeResult.Success(game.id, lbMedia.title)
         }
 
         return ScrapeResult.NotFound(game.id, game.romFilename)
