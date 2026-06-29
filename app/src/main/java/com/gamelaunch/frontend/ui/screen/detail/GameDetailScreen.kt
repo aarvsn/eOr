@@ -68,8 +68,9 @@ import com.gamelaunch.frontend.ui.component.AsyncGameArtwork
 import com.gamelaunch.frontend.ui.component.platformDisplayName
 import com.gamelaunch.frontend.ui.component.VideoPlayer
 import com.gamelaunch.frontend.ui.theme.ElectricBlue
-import com.gamelaunch.frontend.ui.theme.NavyCard
-import com.gamelaunch.frontend.ui.theme.NavySurface
+import com.gamelaunch.frontend.ui.theme.GameColorScheme
+import com.gamelaunch.frontend.ui.theme.GameLightColorScheme
+import com.gamelaunch.frontend.ui.theme.LocalDarkMode
 import com.gamelaunch.frontend.ui.theme.NeonPurple
 
 private val playGradient = Brush.horizontalGradient(listOf(ElectricBlue, NeonPurple))
@@ -87,7 +88,11 @@ fun GameDetailScreen(
         try { focusRequester.requestFocus() } catch (_: Exception) { }
     }
 
-    Scaffold(containerColor = NavySurface) { _ ->
+    // Follow the user's light/dark choice locally (the global theme stays dark elsewhere).
+    val detailScheme = if (LocalDarkMode.current) GameColorScheme else GameLightColorScheme
+
+    MaterialTheme(colorScheme = detailScheme) {
+    Scaffold(containerColor = MaterialTheme.colorScheme.surface) { _ ->
         if (state.isLoading) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = ElectricBlue)
@@ -148,7 +153,7 @@ fun GameDetailScreen(
                         .background(
                             Brush.verticalGradient(
                                 0f to Color.Transparent,
-                                1f to NavySurface
+                                1f to MaterialTheme.colorScheme.surface
                             )
                         )
                 )
@@ -221,7 +226,7 @@ fun GameDetailScreen(
                     .fillMaxWidth()
                     .offset(y = (-20).dp),
                 shape  = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-                colors = CardDefaults.cardColors(containerColor = NavySurface),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(0.dp)
             ) {
                 Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 20.dp)) {
@@ -346,6 +351,7 @@ fun GameDetailScreen(
             )
         }
     }
+    }
 }
 
 @Composable
@@ -355,7 +361,7 @@ private fun MetaChip(label: String) {
         style    = MaterialTheme.typography.labelSmall,
         color    = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier
-            .background(NavyCard, RoundedCornerShape(6.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(6.dp))
             .padding(horizontal = 8.dp, vertical = 4.dp)
     )
 }
