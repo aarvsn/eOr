@@ -28,8 +28,11 @@ class ScrapeGameUseCase @Inject constructor(
         val platform = PlatformDefinitions.byId[game.platformId]
             ?: return ScrapeResult.Error(game.id, IllegalArgumentException("Unknown platform: ${game.platformId}"))
 
-        // ── ScreenScraper (only when both dev + user credentials are present) ──
-        if (config.isConfigured && config.devid.isNotBlank() && config.devpassword.isNotBlank()) {
+        // ── ScreenScraper (default/preferred — requires user to have a free SS account) ──
+        // Dev credentials (devid/devpassword) are compiled in from local.properties.
+        // User credentials (ssid/sspassword) must be set in Settings.
+        // Falls through to libretro → LaunchBox only on 404 or other non-429 error.
+        if (config.isConfigured) {
             val ssResult = scraperRepository.scrapeGame(
                 config   = config,
                 systemId = platform.scraperSystemId,

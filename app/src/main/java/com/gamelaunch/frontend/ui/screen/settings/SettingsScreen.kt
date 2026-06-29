@@ -412,10 +412,12 @@ fun SettingsScreen(
             Spacer(Modifier.height(4.dp))
 
             // ── ScreenScraper ──────────────────────────────────────────────
-            SettingsSectionHeader("ScreenScraper")
+            SettingsSectionHeader("ScreenScraper (Recommended)")
             SettingsCard {
                 Text(
-                    "Sign up at screenscraper.fr for credentials. Optional — artwork falls back to LaunchBox.",
+                    "ScreenScraper is the default scraper — it provides the best box art, screenshots, wheel logos, and video previews. " +
+                    "Create a free account at screenscraper.fr, then enter your username and password below. " +
+                    "Without credentials the app falls back to libretro thumbnails and LaunchBox.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

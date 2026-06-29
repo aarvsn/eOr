@@ -7,7 +7,7 @@ data class ScraperConfig(
     val sspassword: String = "",
     val devid: String = BuildConfig.SS_DEV_ID,
     val devpassword: String = BuildConfig.SS_DEV_PASSWORD,
-    val softname: String = "GameLauncherAndroid",
+    val softname: String = "eOr",
     val preferredRegion: String = "us",
     val scrapeBoxArt: Boolean = true,
     val scrapeScreenshots: Boolean = true,
