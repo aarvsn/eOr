@@ -104,3 +104,18 @@ fun AppTheme(
         )
     }
 }
+
+/**
+ * Wrap a screen so its Material colours follow the user's light/dark choice. The app's root
+ * MaterialTheme stays dark and most screens read [LocalDarkMode] for their own colours; screens
+ * built largely from Material components (Settings, detail, scan, etc.) wrap their content in this
+ * so TopAppBar / Card / OutlinedTextField / Text adapt automatically.
+ */
+@Composable
+fun ThemedScreen(content: @Composable () -> Unit) {
+    MaterialTheme(
+        colorScheme = if (LocalDarkMode.current) GameColorScheme else GameLightColorScheme,
+        typography  = GameTypography,
+        content     = content
+    )
+}

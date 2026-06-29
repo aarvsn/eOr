@@ -82,11 +82,9 @@ import com.gamelaunch.frontend.domain.usecase.LbSyncStatus
 import com.gamelaunch.frontend.ui.input.GamepadL1
 import com.gamelaunch.frontend.ui.input.GamepadR1
 import com.gamelaunch.frontend.ui.theme.ElectricBlue
-import com.gamelaunch.frontend.ui.theme.GameColorScheme
-import com.gamelaunch.frontend.ui.theme.GameLightColorScheme
 import com.gamelaunch.frontend.ui.theme.LayoutMode
-import com.gamelaunch.frontend.ui.theme.LocalDarkMode
 import com.gamelaunch.frontend.ui.theme.NeonPurple
+import com.gamelaunch.frontend.ui.theme.ThemedScreen
 import com.gamelaunch.frontend.util.StorageUtils
 
 private val gradientBrush = Brush.horizontalGradient(listOf(ElectricBlue, NeonPurple))
@@ -140,10 +138,6 @@ fun SettingsScreen(
         }
     }
 
-    // Honour the user's light/dark choice locally — the rest of the app keeps the dark
-    // MaterialTheme and reads LocalDarkMode for its own colours, so we override only here.
-    val settingsScheme = if (LocalDarkMode.current) GameColorScheme else GameLightColorScheme
-
     // L1 / R1 cycle between tabs (with wraparound), mirroring the home screen.
     fun cycleTab(delta: Int) {
         val entries = SettingsTab.entries
@@ -154,7 +148,8 @@ fun SettingsScreen(
     val tabFocusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { tabFocusRequester.requestFocus() } }
 
-    MaterialTheme(colorScheme = settingsScheme) {
+    // Honour the user's light/dark choice for this screen's Material components.
+    ThemedScreen {
     Box(
         modifier = Modifier
             .fillMaxSize()

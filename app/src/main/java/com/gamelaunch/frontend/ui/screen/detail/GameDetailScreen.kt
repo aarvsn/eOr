@@ -68,10 +68,8 @@ import com.gamelaunch.frontend.ui.component.AsyncGameArtwork
 import com.gamelaunch.frontend.ui.component.platformDisplayName
 import com.gamelaunch.frontend.ui.component.VideoPlayer
 import com.gamelaunch.frontend.ui.theme.ElectricBlue
-import com.gamelaunch.frontend.ui.theme.GameColorScheme
-import com.gamelaunch.frontend.ui.theme.GameLightColorScheme
-import com.gamelaunch.frontend.ui.theme.LocalDarkMode
 import com.gamelaunch.frontend.ui.theme.NeonPurple
+import com.gamelaunch.frontend.ui.theme.ThemedScreen
 
 private val playGradient = Brush.horizontalGradient(listOf(ElectricBlue, NeonPurple))
 private val glassColor   = Color.White.copy(alpha = 0.14f)
@@ -88,10 +86,8 @@ fun GameDetailScreen(
         try { focusRequester.requestFocus() } catch (_: Exception) { }
     }
 
-    // Follow the user's light/dark choice locally (the global theme stays dark elsewhere).
-    val detailScheme = if (LocalDarkMode.current) GameColorScheme else GameLightColorScheme
-
-    MaterialTheme(colorScheme = detailScheme) {
+    // Follow the user's light/dark choice for this screen's Material components.
+    ThemedScreen {
     Scaffold(containerColor = MaterialTheme.colorScheme.surface) { _ ->
         if (state.isLoading) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

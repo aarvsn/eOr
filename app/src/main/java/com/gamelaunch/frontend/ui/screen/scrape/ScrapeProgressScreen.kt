@@ -41,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.gamelaunch.frontend.domain.usecase.ScrapeResult
+import com.gamelaunch.frontend.ui.theme.ThemedScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,6 +58,7 @@ fun ScrapeProgressScreen(
         }
     }
 
+    ThemedScreen {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -154,5 +156,6 @@ fun ScrapeProgressScreen(
                 }
             }
         }
+    }
     }
 }
