@@ -77,6 +77,9 @@ interface GameDao {
     @Query("DELETE FROM games WHERE rom_path NOT IN (:validPaths)")
     suspend fun deleteGamesNotInPaths(validPaths: List<String>): Int
 
+    @Query("DELETE FROM games WHERE platform_id = 'android' AND rom_path NOT IN (:validPaths)")
+    suspend fun deleteAndroidGamesNotIn(validPaths: List<String>): Int
+
     @Query("DELETE FROM games WHERE id = :id")
     suspend fun deleteById(id: Long)
 

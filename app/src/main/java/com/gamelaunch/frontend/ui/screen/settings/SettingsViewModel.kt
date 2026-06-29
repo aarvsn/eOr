@@ -10,6 +10,7 @@ import com.gamelaunch.frontend.domain.repository.SettingsRepository
 import com.gamelaunch.frontend.domain.usecase.EsdeImportStatus
 import com.gamelaunch.frontend.domain.usecase.ImportEsdeMediaUseCase
 import com.gamelaunch.frontend.domain.usecase.LbSyncStatus
+import com.gamelaunch.frontend.domain.usecase.ScanAndroidGamesUseCase
 import com.gamelaunch.frontend.domain.usecase.SyncLaunchBoxUseCase
 import com.gamelaunch.frontend.ui.theme.LayoutMode
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,6 +23,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class SettingsUiState(
+    val androidScanResult: String? = null,
     val romRootPath: String = "",
     val ssId: String = "",
     val ssPassword: String = "",
@@ -52,6 +54,7 @@ class SettingsViewModel @Inject constructor(
     private val emulatorRepository: EmulatorRepository,
     private val syncLaunchBoxUseCase: SyncLaunchBoxUseCase,
     private val importEsdeMediaUseCase: ImportEsdeMediaUseCase,
+    private val scanAndroidGamesUseCase: ScanAndroidGamesUseCase,
     private val launchBoxDao: LaunchBoxDao
 ) : ViewModel() {
 
@@ -225,6 +228,20 @@ class SettingsViewModel @Inject constructor(
 
     fun dismissLbSyncStatus() {
         _uiState.update { it.copy(lbSyncStatus = null) }
+    }
+
+    fun scanAndroidGames() {
+        viewModelScope.launch {
+            scanAndroidGamesUseCase().collect { progress ->
+                if (progress.scanned == progress.total) {
+                    _uiState.update { it.copy(androidScanResult = "Found ${progress.added} new Android game${if (progress.added != 1) "s" else ""}") }
+                }
+            }
+        }
+    }
+
+    fun clearAndroidScanResult() {
+        _uiState.update { it.copy(androidScanResult = null) }
     }
 
     fun finishSetup() {

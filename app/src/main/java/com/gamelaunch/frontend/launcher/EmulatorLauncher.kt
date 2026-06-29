@@ -18,6 +18,15 @@ class EmulatorLauncher @Inject constructor(
     private val packageManagerHelper: PackageManagerHelper
 ) {
     suspend fun launch(game: Game): Result<Unit> {
+        // Android game: romPath is "package:<pkg>" — launch the app directly.
+        if (game.romPath.startsWith("package:")) {
+            val pkg = game.romPath.removePrefix("package:")
+            val intent = context.packageManager.getLaunchIntentForPackage(pkg)
+                ?: return Result.failure(Exception("App not installed: $pkg"))
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            return tryStartActivity(intent)
+        }
+
         var mapping = emulatorRepository.getMappingForPlatform(game.platformId)
             ?: return Result.failure(NoEmulatorConfiguredException(game.platformId))
 

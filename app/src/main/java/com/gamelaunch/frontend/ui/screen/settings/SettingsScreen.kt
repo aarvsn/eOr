@@ -507,6 +507,32 @@ fun SettingsScreen(
 
             Spacer(Modifier.height(4.dp))
 
+            // ── Android Games ──────────────────────────────────────────────
+            SettingsSectionHeader("Android Games")
+            SettingsCard {
+                Text(
+                    "Scan installed Android games (apps tagged as games) and add them to your library.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(10.dp))
+                GradientFillButton(
+                    text     = "Scan Android Games",
+                    onClick  = { viewModel.scanAndroidGames() },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                state.androidScanResult?.let { result ->
+                    Spacer(Modifier.height(6.dp))
+                    StatusRow(
+                        icon  = Icons.Default.Check,
+                        text  = result,
+                        color = ElectricBlue
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(4.dp))
+
             // ── Display ────────────────────────────────────────────────────
             SettingsSectionHeader("Display")
             SettingsCard {
