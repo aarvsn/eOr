@@ -22,6 +22,17 @@ data class RaRecentlyPlayedDto(
     @SerializedName("LastPlayed")  val lastPlayed: String? = null
 )
 
+data class RaLoginDto(
+    @SerializedName("Success")       val success: Boolean? = null,
+    @SerializedName("User")          val user: String? = null,
+    @SerializedName("Token")         val token: String? = null,
+    @SerializedName("Score")         val score: Int? = null,
+    @SerializedName("SoftcoreScore") val softcoreScore: Int? = null,
+    @SerializedName("AccountType")   val accountType: String? = null,
+    @SerializedName("Error")         val error: String? = null,
+    @SerializedName("Code")          val code: String? = null
+)
+
 data class RaRecentGameDto(
     @SerializedName("GameID")                    val gameId: Int? = null,
     @SerializedName("ConsoleID")                 val consoleId: Int? = null,

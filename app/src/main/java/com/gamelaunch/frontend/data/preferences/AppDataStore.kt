@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -37,6 +38,9 @@ class AppDataStore @Inject constructor(@ApplicationContext private val context: 
         val DARK_MODE = booleanPreferencesKey("dark_mode")
         val RA_USERNAME = stringPreferencesKey("ra_username")
         val RA_API_KEY = stringPreferencesKey("ra_api_key")
+        val RA_TOKEN = stringPreferencesKey("ra_token")
+        val RA_POINTS = intPreferencesKey("ra_points")
+        val RA_SOFTCORE_POINTS = intPreferencesKey("ra_softcore_points")
     }
 
     val romRootPath: Flow<String> = context.dataStore.data.map { it[Keys.ROM_ROOT_PATH] ?: "" }
@@ -56,6 +60,9 @@ class AppDataStore @Inject constructor(@ApplicationContext private val context: 
     val darkMode: Flow<Boolean> = context.dataStore.data.map { it[Keys.DARK_MODE] ?: false }
     val raUsername: Flow<String> = context.dataStore.data.map { it[Keys.RA_USERNAME] ?: "" }
     val raApiKey: Flow<String> = context.dataStore.data.map { it[Keys.RA_API_KEY] ?: "" }
+    val raToken: Flow<String> = context.dataStore.data.map { it[Keys.RA_TOKEN] ?: "" }
+    val raPoints: Flow<Int> = context.dataStore.data.map { it[Keys.RA_POINTS] ?: 0 }
+    val raSoftcorePoints: Flow<Int> = context.dataStore.data.map { it[Keys.RA_SOFTCORE_POINTS] ?: 0 }
 
     suspend fun setRomRootPath(path: String) = context.dataStore.edit { it[Keys.ROM_ROOT_PATH] = path }
     suspend fun setMediaFolderPath(path: String) = context.dataStore.edit { it[Keys.MEDIA_FOLDER_PATH] = path }
@@ -74,8 +81,20 @@ class AppDataStore @Inject constructor(@ApplicationContext private val context: 
     suspend fun setFirstLaunchComplete() = context.dataStore.edit { it[Keys.FIRST_LAUNCH] = false }
     suspend fun setShowRecentlyPlayed(enabled: Boolean) = context.dataStore.edit { it[Keys.SHOW_RECENTLY_PLAYED] = enabled }
     suspend fun setDarkMode(enabled: Boolean) = context.dataStore.edit { it[Keys.DARK_MODE] = enabled }
-    suspend fun setRaCredentials(username: String, apiKey: String) = context.dataStore.edit {
-        it[Keys.RA_USERNAME] = username
+    suspend fun setRaApiKey(apiKey: String) = context.dataStore.edit {
         it[Keys.RA_API_KEY] = apiKey
+    }
+    suspend fun setRaSession(username: String, token: String, points: Int, softcorePoints: Int) = context.dataStore.edit {
+        it[Keys.RA_USERNAME] = username
+        it[Keys.RA_TOKEN] = token
+        it[Keys.RA_POINTS] = points
+        it[Keys.RA_SOFTCORE_POINTS] = softcorePoints
+    }
+    suspend fun clearRaCredentials() = context.dataStore.edit {
+        it.remove(Keys.RA_USERNAME)
+        it.remove(Keys.RA_API_KEY)
+        it.remove(Keys.RA_TOKEN)
+        it.remove(Keys.RA_POINTS)
+        it.remove(Keys.RA_SOFTCORE_POINTS)
     }
 }

@@ -12,6 +12,25 @@ data class RaProfile(
     val status: String?
 )
 
+/** Result of a Connect API username/password (or token) login. */
+data class RaSession(
+    val username: String,
+    val token: String,
+    val points: Int,
+    val softcorePoints: Int
+) {
+    /** Basic profile that can be shown without a Web API key. */
+    fun toProfile(): RaProfile = RaProfile(
+        username       = username,
+        avatarUrl      = raAvatarUrl(username),
+        totalPoints    = points,
+        softcorePoints = softcorePoints,
+        truePoints     = 0,
+        rank           = null,
+        status         = null
+    )
+}
+
 data class RaRecentGame(
     val gameId: Int,
     val title: String,

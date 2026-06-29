@@ -2,6 +2,7 @@ package com.gamelaunch.frontend.di
 
 import com.gamelaunch.frontend.data.network.LaunchBoxService
 import com.gamelaunch.frontend.data.network.RetroAchievementsApi
+import com.gamelaunch.frontend.data.network.RetroAchievementsConnectApi
 import com.gamelaunch.frontend.data.network.ScreenScraperApi
 import com.gamelaunch.frontend.data.network.interceptor.RateLimitInterceptor
 import dagger.Module
@@ -89,6 +90,14 @@ object NetworkModule {
     @Named("ra")
     fun provideRaOkHttpClient(): OkHttpClient =
         OkHttpClient.Builder()
+            // The RA Connect API (dorequest.php) REJECTS requests without a User-Agent.
+            // Format: {Frontend}/{version} ({platform}) — see api-docs.retroachievements.org
+            .addInterceptor { chain ->
+                val request = chain.request().newBuilder()
+                    .header("User-Agent", "eOr/${com.gamelaunch.frontend.BuildConfig.VERSION_NAME} (Android)")
+                    .build()
+                chain.proceed(request)
+            }
             .connectTimeout(15, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .build()
@@ -107,4 +116,9 @@ object NetworkModule {
     @Singleton
     fun provideRetroAchievementsApi(@Named("ra") retrofit: Retrofit): RetroAchievementsApi =
         retrofit.create(RetroAchievementsApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideRetroAchievementsConnectApi(@Named("ra") retrofit: Retrofit): RetroAchievementsConnectApi =
+        retrofit.create(RetroAchievementsConnectApi::class.java)
 }

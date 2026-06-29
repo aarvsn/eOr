@@ -16,6 +16,9 @@ interface SettingsRepository {
     val darkMode: Flow<Boolean>
     val raUsername: Flow<String>
     val raApiKey: Flow<String>
+    val raToken: Flow<String>
+    val raPoints: Flow<Int>
+    val raSoftcorePoints: Flow<Int>
 
     suspend fun setRomRootPath(path: String)
     suspend fun setMediaFolderPath(path: String)
@@ -33,5 +36,7 @@ interface SettingsRepository {
     suspend fun setFirstLaunchComplete()
     suspend fun setShowRecentlyPlayed(enabled: Boolean)
     suspend fun setDarkMode(enabled: Boolean)
-    suspend fun setRaCredentials(username: String, apiKey: String)
+    suspend fun setRaApiKey(apiKey: String)
+    suspend fun setRaSession(username: String, token: String, points: Int, softcorePoints: Int)
+    suspend fun clearRaCredentials()
 }

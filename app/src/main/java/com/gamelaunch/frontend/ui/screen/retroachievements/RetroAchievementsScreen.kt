@@ -74,7 +74,8 @@ fun RetroAchievementsScreen(
             is RaScreenState.NotConfigured -> NotConfiguredContent(textPrimary, textSecondary, onGoToSettings)
             is RaScreenState.Loading       -> LoadingContent()
             is RaScreenState.Error         -> ErrorContent(s.message, textPrimary, textSecondary, viewModel::refresh)
-            is RaScreenState.Loaded        -> LoadedContent(s.profile, s.recentGames, textPrimary, textSecondary, darkMode, viewModel::refresh)
+            is RaScreenState.LoadedBasic   -> LoadedContent(s.profile, emptyList(), textPrimary, textSecondary, darkMode, viewModel::refresh, basicMode = true, onGoToSettings = onGoToSettings)
+            is RaScreenState.Loaded        -> LoadedContent(s.profile, s.recentGames, textPrimary, textSecondary, darkMode, viewModel::refresh, basicMode = false, onGoToSettings = onGoToSettings)
         }
     }
 }
@@ -91,7 +92,7 @@ private fun NotConfiguredContent(textPrimary: Color, textSecondary: Color, onGoT
         Text("RetroAchievements", style = MaterialTheme.typography.headlineSmall, color = textPrimary, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(8.dp))
         Text(
-            "Enter your RetroAchievements username and API key in Settings to track your progress.",
+            "Sign in with your RetroAchievements username and password in Settings to see your points and profile.",
             style = MaterialTheme.typography.bodyMedium,
             color = textSecondary,
             textAlign = TextAlign.Center
@@ -141,7 +142,9 @@ private fun LoadedContent(
     textPrimary: Color,
     textSecondary: Color,
     darkMode: Boolean,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    basicMode: Boolean,
+    onGoToSettings: () -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -150,7 +153,11 @@ private fun LoadedContent(
     ) {
         item { ProfileHeader(profile, textPrimary, textSecondary, onRefresh) }
         item { Spacer(Modifier.height(4.dp)) }
-        if (games.isEmpty()) {
+
+        if (basicMode) {
+            // Signed in with password only — prompt to add a Web API key for the full dashboard.
+            item { AddKeyHint(textPrimary, textSecondary, onGoToSettings) }
+        } else if (games.isEmpty()) {
             item {
                 Text("No recently played games found.", color = textSecondary, modifier = Modifier.padding(8.dp))
             }
@@ -163,6 +170,29 @@ private fun LoadedContent(
             }
         }
         item { Spacer(Modifier.height(24.dp)) }
+    }
+}
+
+@Composable
+private fun AddKeyHint(textPrimary: Color, textSecondary: Color, onGoToSettings: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .glassTile(RoundedCornerShape(16.dp), color = BrandBlue)
+            .clickable { onGoToSettings() }
+            .padding(16.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Default.EmojiEvents, contentDescription = null, tint = Gold, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(8.dp))
+            Text("See your game progress", style = MaterialTheme.typography.titleSmall, color = textPrimary, fontWeight = FontWeight.SemiBold)
+        }
+        Spacer(Modifier.height(6.dp))
+        Text(
+            "Add a free Web API key in Settings to unlock your rank and recently-played games with achievement completion bars.",
+            style = MaterialTheme.typography.bodySmall,
+            color = textSecondary
+        )
     }
 }
 

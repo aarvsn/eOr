@@ -566,7 +566,7 @@ fun SettingsScreen(
             SettingsSectionHeader("RetroAchievements")
             SettingsCard {
                 Text(
-                    "Enter your RetroAchievements username and Web API Key (found at retroachievements.org → Settings → API Key).",
+                    "Sign in with your RetroAchievements username and password to see your points and profile.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -584,9 +584,9 @@ fun SettingsScreen(
                 )
                 Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
-                    value                = state.raApiKey,
-                    onValueChange        = viewModel::updateRaApiKey,
-                    label                = { Text("Web API Key") },
+                    value                = state.raPassword,
+                    onValueChange        = viewModel::updateRaPassword,
+                    label                = { Text("Password") },
                     visualTransformation = PasswordVisualTransformation(),
                     modifier             = Modifier.fillMaxWidth(),
                     singleLine           = true,
@@ -597,18 +597,52 @@ fun SettingsScreen(
                 )
                 Spacer(Modifier.height(10.dp))
                 GradientFillButton(
-                    text     = "Save",
+                    text     = if (state.raLoggedIn) "Update Sign-In" else "Sign In",
                     onClick  = { viewModel.saveRaCredentials() },
+                    enabled  = !state.raLoggingIn,
+                    loading  = state.raLoggingIn,
                     modifier = Modifier.fillMaxWidth()
                 )
-                if (state.raSaved) {
+                state.raLoginResult?.let { msg ->
+                    val ok = msg.startsWith("Signed in")
                     Spacer(Modifier.height(8.dp))
                     StatusRow(
-                        icon  = Icons.Default.Check,
-                        text  = "Credentials saved — open the RetroAchievements tab",
-                        color = ElectricBlue
+                        icon  = if (ok) Icons.Default.Check else Icons.Default.Close,
+                        text  = msg,
+                        color = if (ok) ElectricBlue else MaterialTheme.colorScheme.error
                     )
                 }
+                if (state.raLoggedIn) {
+                    Spacer(Modifier.height(6.dp))
+                    GradientOutlineButton(
+                        text     = "Sign Out",
+                        onClick  = { viewModel.signOutRa() },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                Spacer(Modifier.height(12.dp))
+                CardDivider()
+                Spacer(Modifier.height(12.dp))
+
+                Text(
+                    "Optional: add a Web API Key (retroachievements.org → Settings → Keys) to also see your rank and recently-played games with completion progress.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value                = state.raApiKey,
+                    onValueChange        = viewModel::updateRaApiKey,
+                    label                = { Text("Web API Key (optional)") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier             = Modifier.fillMaxWidth(),
+                    singleLine           = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor   = ElectricBlue,
+                        unfocusedBorderColor = NavyBorder
+                    )
+                )
             }
 
             Spacer(Modifier.height(16.dp))

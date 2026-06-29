@@ -1,18 +1,48 @@
 package com.gamelaunch.frontend.data.repository
 
 import com.gamelaunch.frontend.data.network.RetroAchievementsApi
+import com.gamelaunch.frontend.data.network.RetroAchievementsConnectApi
+import com.gamelaunch.frontend.data.network.dto.RaLoginDto
 import com.gamelaunch.frontend.domain.model.RaProfile
 import com.gamelaunch.frontend.domain.model.RaRecentGame
+import com.gamelaunch.frontend.domain.model.RaSession
 import com.gamelaunch.frontend.domain.model.raAvatarUrl
 import com.gamelaunch.frontend.domain.model.toRaMediaUrl
 import com.gamelaunch.frontend.domain.repository.RetroAchievementsRepository
+import retrofit2.Response
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class RetroAchievementsRepositoryImpl @Inject constructor(
-    private val api: RetroAchievementsApi
+    private val api: RetroAchievementsApi,
+    private val connectApi: RetroAchievementsConnectApi
 ) : RetroAchievementsRepository {
+
+    override suspend fun login(username: String, password: String): Result<RaSession> =
+        runCatching {
+            connectApi.loginWithPassword(username = username, password = password)
+                .toSession(username)
+        }
+
+    override suspend fun refreshSession(username: String, token: String): Result<RaSession> =
+        runCatching {
+            connectApi.loginWithToken(username = username, token = token)
+                .toSession(username)
+        }
+
+    private fun Response<RaLoginDto>.toSession(fallbackUsername: String): RaSession {
+        val dto = body() ?: error("Empty response (HTTP ${code()})")
+        if (dto.success != true || dto.token.isNullOrBlank()) {
+            error(dto.error ?: "Invalid username or password")
+        }
+        return RaSession(
+            username       = dto.user ?: fallbackUsername,
+            token          = dto.token,
+            points         = dto.score ?: 0,
+            softcorePoints = dto.softcoreScore ?: 0
+        )
+    }
 
     override suspend fun getUserProfile(username: String, apiKey: String): Result<RaProfile> =
         runCatching {
