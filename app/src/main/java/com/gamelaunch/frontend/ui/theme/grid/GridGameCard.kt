@@ -2,7 +2,9 @@ package com.gamelaunch.frontend.ui.theme.grid
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,6 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,6 +32,8 @@ import androidx.compose.ui.unit.dp
 import com.gamelaunch.frontend.domain.model.Game
 import com.gamelaunch.frontend.domain.model.GameMedia
 import com.gamelaunch.frontend.ui.component.AsyncGameArtwork
+import com.gamelaunch.frontend.ui.theme.BounceDurationMs
+import com.gamelaunch.frontend.ui.theme.BounceEasing
 import com.gamelaunch.frontend.ui.theme.ElectricBlue
 import com.gamelaunch.frontend.ui.theme.NeonPurple
 import kotlinx.coroutines.delay
@@ -57,11 +62,20 @@ fun GridGameCard(
         }
     }
 
+    // Focused card pops with the same bounce-scale as the console cards.
+    val scale by animateFloatAsState(
+        targetValue   = if (isFocused) 1.07f else 1f,
+        animationSpec = tween(durationMillis = BounceDurationMs, easing = BounceEasing),
+        label = "gridGameScale"
+    )
+
     Box(
         modifier = Modifier
             .graphicsLayer {
                 translationY = (1f - enter.value) * 72.dp.toPx()
                 alpha = enter.value.coerceIn(0f, 1f)
+                scaleX = scale
+                scaleY = scale
             }
             .then(
                 if (isFocused)
