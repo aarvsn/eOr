@@ -129,12 +129,26 @@ class MainActivity : ComponentActivity() {
         return super.dispatchGenericMotionEvent(ev)
     }
 
+    /**
+     * Emit DPAD key events for an axis as it crosses the dead zone. Critically this also injects
+     * ACTION_UP when the axis returns to (or passes through) neutral, so a released D-pad/stick
+     * produces a real KeyUp — without it the hold-to-scroll repeat would never be cancelled and the
+     * UI would scroll forever. A direction flip (e.g. right → left) releases the old direction and
+     * presses the new one in the same step.
+     */
     private fun injectIfCrossed(cur: Float, prev: Float, dead: Float, posCode: Int, negCode: Int) {
+        val curDir  = if (cur  > dead) 1 else if (cur  < -dead) -1 else 0
+        val prevDir = if (prev > dead) 1 else if (prev < -dead) -1 else 0
+        if (curDir == prevDir) return
+
         val now = SystemClock.uptimeMillis()
-        if (cur > dead && prev <= dead)
-            dispatchKeyEvent(AndroidKeyEvent(now, now, AndroidKeyEvent.ACTION_DOWN, posCode, 0))
-        else if (cur < -dead && prev >= -dead)
-            dispatchKeyEvent(AndroidKeyEvent(now, now, AndroidKeyEvent.ACTION_DOWN, negCode, 0))
+        fun send(action: Int, dir: Int) {
+            val code = if (dir > 0) posCode else negCode
+            dispatchKeyEvent(AndroidKeyEvent(now, now, action, code, 0))
+        }
+        // Release whatever direction was held, then press the new one (either may be neutral).
+        if (prevDir != 0) send(AndroidKeyEvent.ACTION_UP, prevDir)
+        if (curDir  != 0) send(AndroidKeyEvent.ACTION_DOWN, curDir)
     }
 
     private fun requestStoragePermissions() {
