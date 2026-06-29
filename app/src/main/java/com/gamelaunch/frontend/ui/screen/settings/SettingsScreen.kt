@@ -73,10 +73,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.gamelaunch.frontend.domain.usecase.EsdeImportStatus
 import com.gamelaunch.frontend.domain.usecase.LbSyncStatus
 import com.gamelaunch.frontend.ui.theme.ElectricBlue
+import com.gamelaunch.frontend.ui.theme.GameColorScheme
+import com.gamelaunch.frontend.ui.theme.GameLightColorScheme
 import com.gamelaunch.frontend.ui.theme.LayoutMode
-import com.gamelaunch.frontend.ui.theme.NavyBorder
-import com.gamelaunch.frontend.ui.theme.NavyCard
-import com.gamelaunch.frontend.ui.theme.NavySurface
+import com.gamelaunch.frontend.ui.theme.LocalDarkMode
 import com.gamelaunch.frontend.ui.theme.NeonPurple
 import com.gamelaunch.frontend.util.StorageUtils
 
@@ -131,6 +131,11 @@ fun SettingsScreen(
         }
     }
 
+    // Honour the user's light/dark choice locally — the rest of the app keeps the dark
+    // MaterialTheme and reads LocalDarkMode for its own colours, so we override only here.
+    val settingsScheme = if (LocalDarkMode.current) GameColorScheme else GameLightColorScheme
+
+    MaterialTheme(colorScheme = settingsScheme) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = {
@@ -152,7 +157,7 @@ fun SettingsScreen(
                             modifier = Modifier
                                 .padding(8.dp)
                                 .size(36.dp)
-                                .background(Color.White.copy(alpha = 0.1f), CircleShape)
+                                .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)
                         ) {
                             Icon(
                                 Icons.AutoMirrored.Filled.ArrowBack,
@@ -194,7 +199,7 @@ fun SettingsScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = NavySurface
+                    containerColor = MaterialTheme.colorScheme.surface
                 )
             )
         }
@@ -242,6 +247,7 @@ fun SettingsScreen(
             }
         }
     }
+    }
 }
 
 @Composable
@@ -263,7 +269,7 @@ private fun SettingsTabBar(selected: SettingsTab, onSelect: (SettingsTab) -> Uni
                     .clip(RoundedCornerShape(50))
                     .then(
                         if (isSel) Modifier.background(gradientBrush)
-                        else Modifier.background(Color.White.copy(alpha = 0.07f))
+                        else Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
                     )
                     .clickable { onSelect(tab) }
                     .padding(horizontal = 14.dp, vertical = 9.dp)
@@ -334,7 +340,7 @@ private fun RomLibrarySection(
                         modifier = Modifier
                             .weight(1f)
                             .clip(RoundedCornerShape(10.dp))
-                            .background(NavyCard)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
                             .clickable { viewModel.setRomRootPath(path) }
                             .padding(horizontal = 12.dp, vertical = 10.dp),
                         contentAlignment = Alignment.Center
@@ -357,7 +363,7 @@ private fun RomLibrarySection(
                 singleLine  = true,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor   = ElectricBlue,
-                    unfocusedBorderColor = NavyBorder
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline
                 )
             )
             Spacer(Modifier.width(8.dp))
@@ -365,7 +371,7 @@ private fun RomLibrarySection(
                 onClick  = onPickRomFolder,
                 modifier = Modifier
                     .size(48.dp)
-                    .background(NavyCard, RoundedCornerShape(10.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(10.dp))
             ) {
                 Icon(Icons.Default.FolderOpen, contentDescription = "Browse", tint = ElectricBlue)
             }
@@ -480,7 +486,7 @@ private fun ScreenScraperSection(
             singleLine    = true,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor   = ElectricBlue,
-                unfocusedBorderColor = NavyBorder
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline
             )
         )
         Spacer(Modifier.height(8.dp))
@@ -493,7 +499,7 @@ private fun ScreenScraperSection(
             singleLine             = true,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor   = ElectricBlue,
-                unfocusedBorderColor = NavyBorder
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline
             )
         )
         Spacer(Modifier.height(10.dp))
@@ -661,7 +667,7 @@ private fun MediaImportSection(
                 singleLine    = true,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor   = ElectricBlue,
-                    unfocusedBorderColor = NavyBorder
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline
                 )
             )
             Spacer(Modifier.width(8.dp))
@@ -669,7 +675,7 @@ private fun MediaImportSection(
                 onClick  = onPickMediaFolder,
                 modifier = Modifier
                     .size(48.dp)
-                    .background(NavyCard, RoundedCornerShape(10.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(10.dp))
             ) {
                 Icon(Icons.Default.FolderOpen, contentDescription = "Browse", tint = ElectricBlue)
             }
@@ -733,7 +739,7 @@ private fun RetroAchievementsSection(state: SettingsUiState, viewModel: Settings
             singleLine    = true,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor   = ElectricBlue,
-                unfocusedBorderColor = NavyBorder
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline
             )
         )
         Spacer(Modifier.height(8.dp))
@@ -746,7 +752,7 @@ private fun RetroAchievementsSection(state: SettingsUiState, viewModel: Settings
             singleLine           = true,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor   = ElectricBlue,
-                unfocusedBorderColor = NavyBorder
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline
             )
         )
         Spacer(Modifier.height(10.dp))
@@ -794,7 +800,7 @@ private fun RetroAchievementsSection(state: SettingsUiState, viewModel: Settings
             singleLine           = true,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor   = ElectricBlue,
-                unfocusedBorderColor = NavyBorder
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline
             )
         )
     }
@@ -817,7 +823,7 @@ private fun SettingsCard(content: @Composable () -> Unit) {
     Card(
         modifier  = Modifier.fillMaxWidth(),
         shape     = RoundedCornerShape(16.dp),
-        colors    = CardDefaults.cardColors(containerColor = NavySurface),
+        colors    = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -828,7 +834,7 @@ private fun SettingsCard(content: @Composable () -> Unit) {
 
 @Composable
 private fun CardDivider() {
-    HorizontalDivider(color = NavyBorder.copy(alpha = 0.6f), thickness = 0.5.dp)
+    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f), thickness = 0.5.dp)
 }
 
 @Composable
@@ -851,8 +857,8 @@ private fun CardSwitchRow(
             colors = SwitchDefaults.colors(
                 checkedThumbColor       = Color.White,
                 checkedTrackColor       = ElectricBlue,
-                uncheckedThumbColor     = NavyBorder,
-                uncheckedTrackColor     = NavyCard
+                uncheckedThumbColor     = MaterialTheme.colorScheme.outline,
+                uncheckedTrackColor     = MaterialTheme.colorScheme.surfaceVariant
             )
         )
     }
@@ -905,7 +911,7 @@ private fun GradientOutlineButton(
         modifier = modifier
             .height(46.dp)
             .clip(RoundedCornerShape(23.dp))
-            .background(Color.White.copy(alpha = 0.07f))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
             .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier),
         contentAlignment = Alignment.Center
     ) {

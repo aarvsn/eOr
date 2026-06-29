@@ -3,6 +3,7 @@ package com.gamelaunch.frontend.ui.theme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
@@ -21,7 +22,7 @@ val IceWhite     = Color(0xFFE8EDF8)
 val SteelGray    = Color(0xFF8899C0)
 val NavyBorder   = Color(0xFF253060)
 
-private val GameColorScheme = darkColorScheme(
+val GameColorScheme = darkColorScheme(
     primary              = ElectricBlue,
     onPrimary            = Color.White,
     primaryContainer     = Color(0xFF1A2F5C),
@@ -46,6 +47,33 @@ private val GameColorScheme = darkColorScheme(
     outlineVariant       = Color(0xFF182045),
     surfaceTint          = ElectricBlue,
     scrim                = Color(0xCC000000)
+)
+
+// Light counterpart — used by screens that opt into the user's light/dark choice
+// (e.g. Settings wraps itself in this when LocalDarkMode is false).
+val GameLightColorScheme = lightColorScheme(
+    primary              = ElectricBlue,
+    onPrimary            = Color.White,
+    primaryContainer     = Color(0xFFD8E2FF),
+    onPrimaryContainer   = Color(0xFF001A41),
+    secondary            = NeonPurple,
+    onSecondary          = Color.White,
+    secondaryContainer   = Color(0xFFEADDFF),
+    onSecondaryContainer = Color(0xFF24005A),
+    tertiary             = Color(0xFF0091B3),
+    onTertiary           = Color.White,
+    error                = Color(0xFFD23B4E),
+    onError              = Color.White,
+    background           = LightBg,
+    onBackground         = TileText,
+    surface              = Color(0xFFFFFFFF),
+    onSurface            = TileText,
+    surfaceVariant       = Color(0xFFE4E8F1),
+    onSurfaceVariant     = TileSub,
+    outline              = Color(0xFFC4CCDB),
+    outlineVariant       = Color(0xFFD7DDE9),
+    surfaceTint          = ElectricBlue,
+    scrim                = Color(0x66000000)
 )
 
 private val GameTypography = Typography(
