@@ -83,58 +83,65 @@ class ScrapeGameUseCase @Inject constructor(
             if (ssResult.exceptionOrNull() is RateLimitException) return ScrapeResult.RateLimited(game.id)
         }
 
-        // ── libretro thumbnails (no credentials — box art + screenshot + title) ──
-        val thumbs = runCatching {
-            libretroThumbnailScraper.fetch(game.romFilename, game.platformId)
-        }.getOrNull()
+        // ── libretro thumbnails (free fallback — box art + screenshot only) ──
+        // It contributes no metadata, so only bother when the user actually wants artwork.
+        if (config.scrapeBoxArt || config.scrapeScreenshots) {
+            val thumbs = runCatching {
+                libretroThumbnailScraper.fetch(game.romFilename, game.platformId)
+            }.getOrNull()
 
-        if (thumbs != null) {
-            val media = GameMedia(
-                gameId              = game.id,
-                boxArtRemoteUrl     = thumbs.boxArt,
-                screenshotRemoteUrl = thumbs.screenshot,
-                scraperTimestampMs  = System.currentTimeMillis()
-            )
-            mediaRepository.upsertMedia(media)
-            mediaRepository.downloadAndCacheBoxArt(game.id, thumbs.boxArt)
-            runCatching { mediaRepository.downloadAndCacheScreenshot(game.id, thumbs.screenshot) }
-            // Mark scraped so we don't re-fetch every run, keeping the existing title.
-            gameRepository.updateScrapedMetadata(
-                gameId = game.id, scraperGameId = null, title = game.title,
-                description = null, genre = null, releaseYear = null, rating = null
-            )
-            return ScrapeResult.Success(game.id, game.title)
+            if (thumbs != null) {
+                val boxArt     = if (config.scrapeBoxArt) thumbs.boxArt else null
+                val screenshot = if (config.scrapeScreenshots) thumbs.screenshot else null
+                if (boxArt != null || screenshot != null) {
+                    val media = GameMedia(
+                        gameId              = game.id,
+                        boxArtRemoteUrl     = boxArt,
+                        screenshotRemoteUrl = screenshot,
+                        scraperTimestampMs  = System.currentTimeMillis()
+                    )
+                    mediaRepository.upsertMedia(media)
+                    boxArt?.let     { mediaRepository.downloadAndCacheBoxArt(game.id, it) }
+                    screenshot?.let { url -> runCatching { mediaRepository.downloadAndCacheScreenshot(game.id, url) } }
+                    // Mark scraped so we don't re-fetch every run, keeping the existing title.
+                    gameRepository.markScraped(game.id, game.title)
+                    return ScrapeResult.Success(game.id, game.title)
+                }
+            }
         }
 
-        // ── LaunchBox fallback ───────────────────────────────────────────
+        // ── LaunchBox fallback (metadata + art) ───────────────────────────
         val lbMedia = runCatching {
             scrapeLaunchBoxUseCase(game.title, game.platformId)
         }.getOrNull()
 
         if (lbMedia != null) {
-            // Update metadata from LaunchBox
-            gameRepository.updateScrapedMetadata(
-                gameId        = game.id,
-                scraperGameId = null,
-                title         = lbMedia.title,
-                description   = lbMedia.overview,
-                genre         = null,
-                releaseYear   = lbMedia.releaseYear,
-                rating        = lbMedia.rating
-            )
+            if (config.scrapeMetadata) {
+                gameRepository.updateScrapedMetadata(
+                    gameId        = game.id,
+                    scraperGameId = null,
+                    title         = lbMedia.title,
+                    description   = lbMedia.overview,
+                    genre         = null,
+                    releaseYear   = lbMedia.releaseYear,
+                    rating        = lbMedia.rating
+                )
+            } else {
+                gameRepository.markScraped(game.id, game.title)
+            }
             val media = GameMedia(
                 gameId              = game.id,
-                boxArtRemoteUrl     = lbMedia.boxFrontUrl,
-                screenshotRemoteUrl = lbMedia.screenshotUrl,
-                wheelLogoRemoteUrl  = lbMedia.logoUrl,
+                boxArtRemoteUrl     = if (config.scrapeBoxArt)     lbMedia.boxFrontUrl  else null,
+                screenshotRemoteUrl = if (config.scrapeScreenshots) lbMedia.screenshotUrl else null,
+                wheelLogoRemoteUrl  = if (config.scrapeWheelLogos)  lbMedia.logoUrl       else null,
                 videoRemoteUrl      = null, // LaunchBox has no hosted videos
                 scraperTimestampMs  = System.currentTimeMillis()
             )
             mediaRepository.upsertMedia(media)
-            lbMedia.boxFrontUrl?.let     { mediaRepository.downloadAndCacheBoxArt(game.id, it) }
-            lbMedia.screenshotUrl?.let   { mediaRepository.downloadAndCacheScreenshot(game.id, it) }
-            lbMedia.logoUrl?.let         { mediaRepository.downloadAndCacheWheelLogo(game.id, it) }
-            return ScrapeResult.Success(game.id, lbMedia.title)
+            media.boxArtRemoteUrl?.let     { mediaRepository.downloadAndCacheBoxArt(game.id, it) }
+            media.screenshotRemoteUrl?.let { mediaRepository.downloadAndCacheScreenshot(game.id, it) }
+            media.wheelLogoRemoteUrl?.let  { mediaRepository.downloadAndCacheWheelLogo(game.id, it) }
+            return ScrapeResult.Success(game.id, if (config.scrapeMetadata) lbMedia.title else game.title)
         }
 
         return ScrapeResult.NotFound(game.id, game.romFilename)
