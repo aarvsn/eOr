@@ -82,33 +82,46 @@ fun AmbientBackground(
 
 /**
  * Colourful glass tile: a solid colour fill with a soft top-to-bottom sheen, a thin bright edge
- * highlight and a soft floating shadow (colour-tinted when focused). Unselected tiles use a light
- * pastel shade; focused tiles deepen to the full colour and lift, 3DS-style. The fill is opaque so
- * the shadow never bleeds through.
+ * highlight and a soft floating shadow (colour-tinted when focused). In light mode unselected tiles
+ * use a light pastel shade; in dark mode they use a darker shade of the same colour so the cards
+ * match the dark theme. Focused tiles deepen to the full colour and lift, 3DS-style. The fill is
+ * opaque so the shadow never bleeds through.
  */
+@Composable
 fun Modifier.glassTile(
     shape: Shape,
     color: Color,
     selected: Boolean = false
 ): Modifier {
-    val base = if (selected) color else lerp(color, Color.White, 0.5f)
+    val dark = LocalDarkMode.current
+
+    // Light: unselected tiles lighten toward white (pastel). Dark: tiles darken toward black so
+    // they read as a darker shade of the same colour and sit naturally on the dark background.
+    val base = if (dark) {
+        if (selected) lerp(color, Color.Black, 0.15f) else lerp(color, Color.Black, 0.60f)
+    } else {
+        if (selected) color else lerp(color, Color.White, 0.5f)
+    }
+    val sheen        = lerp(base, Color.White, if (dark) 0.10f else 0.18f)
+    val borderTop    = Color.White.copy(alpha = if (dark) 0.18f else 0.5f)
+    val borderBottom = Color.White.copy(alpha = if (dark) 0.04f else 0.1f)
+    val restShadow   = if (dark) Color(0xFF000820) else Color(0xFF2A3550)
+
     return this
         .shadow(
             elevation = if (selected) 18.dp else 7.dp,
             shape = shape,
-            ambientColor = if (selected) color else Color(0xFF2A3550),
-            spotColor = if (selected) color else Color(0xFF2A3550),
+            ambientColor = if (selected) color else restShadow,
+            spotColor = if (selected) color else restShadow,
             clip = false
         )
         .clip(shape)
         .background(
-            Brush.verticalGradient(listOf(lerp(base, Color.White, 0.18f), base))
+            Brush.verticalGradient(listOf(sheen, base))
         )
         .border(
             width = 1.dp,
-            brush = Brush.verticalGradient(
-                listOf(Color.White.copy(alpha = 0.5f), Color.White.copy(alpha = 0.1f))
-            ),
+            brush = Brush.verticalGradient(listOf(borderTop, borderBottom)),
             shape = shape
         )
 }
