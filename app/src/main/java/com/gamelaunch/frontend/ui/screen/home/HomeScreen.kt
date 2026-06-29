@@ -53,6 +53,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -260,7 +261,7 @@ fun HomeScreen(
                                 }
                                 GamepadL1 -> { cyclePlatform(-1); true }
                                 GamepadR1 -> { cyclePlatform(+1); true }
-                                GamepadB -> { viewModel.exitToSystems(); true }
+                                GamepadB, Key.Back -> { viewModel.exitToSystems(); true }
                                 else -> false
                             }
                         }
@@ -307,19 +308,34 @@ fun HomeScreen(
                         Text("e",  fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = BrandBlue, letterSpacing = 2.sp)
                         Text("Or", fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = textPrimary, letterSpacing = 2.sp)
 
-                        // Inside a system, show which one (the tabs/pills are hidden here)
+                        // Inside a system, breadcrumb: eOr · <Console> → <hovered game>
                         if (state.topTab == TopTab.GAMES && state.gameViewActive) {
                             state.selectedPlatform?.let { pid ->
                                 Text(
                                     "  ·  " + platformDisplayName(pid),
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = textPrimary.copy(alpha = 0.85f)
+                                    color = textPrimary.copy(alpha = 0.85f),
+                                    maxLines = 1
                                 )
                             }
+                            val hoveredGame = state.games.getOrNull(gridFocusIndex)
+                            if (hoveredGame != null) {
+                                Text(
+                                    "  →  " + hoveredGame.title,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = BrandBlue,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f).padding(start = 2.dp)
+                                )
+                            } else {
+                                Spacer(Modifier.weight(1f))
+                            }
+                        } else {
+                            Spacer(Modifier.weight(1f))
                         }
-
-                        Spacer(Modifier.weight(1f))
 
                         IconButton(
                             onClick  = onSettingsClick,

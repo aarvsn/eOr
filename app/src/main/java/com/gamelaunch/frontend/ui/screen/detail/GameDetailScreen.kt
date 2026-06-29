@@ -109,8 +109,8 @@ fun GameDetailScreen(
                     when (event.key) {
                         // A = launch
                         GamepadA, Key.DirectionCenter -> { viewModel.launchGame(); true }
-                        // B = back
-                        GamepadB -> { onBack(); true }
+                        // B / system back = return to the game grid
+                        GamepadB, Key.Back -> { onBack(); true }
                         // Y = toggle favourite
                         GamepadY -> { viewModel.toggleFavorite(); true }
                         else -> false
