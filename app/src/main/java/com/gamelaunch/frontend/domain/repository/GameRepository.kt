@@ -8,6 +8,14 @@ interface GameRepository {
     fun getGamesByPlatform(platformId: String): Flow<List<Game>>
     suspend fun getGameById(id: Long): Game?
     suspend fun getUnscrapedGames(): List<Game>
+    /** Games missing any of the enabled scrape outputs (skips ones that already have everything). */
+    suspend fun getGamesNeedingScrape(
+        needMeta: Boolean,
+        needBox: Boolean,
+        needShot: Boolean,
+        needWheel: Boolean,
+        needVideo: Boolean
+    ): List<Game>
     fun getFavorites(): Flow<List<Game>>
     fun getRecentlyPlayed(limit: Int = 20): Flow<List<Game>>
     fun getDistinctPlatformIds(): Flow<List<String>>

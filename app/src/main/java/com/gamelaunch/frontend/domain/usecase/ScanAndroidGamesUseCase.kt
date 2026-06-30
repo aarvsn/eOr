@@ -2,6 +2,7 @@ package com.gamelaunch.frontend.domain.usecase
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import com.gamelaunch.frontend.domain.model.Game
 import com.gamelaunch.frontend.domain.repository.GameRepository
@@ -24,18 +25,34 @@ class ScanAndroidGamesUseCase @Inject constructor(
 
     operator fun invoke(): Flow<ScanProgress> = flow {
         val pm = context.packageManager
-        // Primary: apps that declare CATEGORY_GAME.
-        val gameIntent = Intent(Intent.ACTION_MAIN).addCategory("android.intent.category.GAME")
-        val fromCategory = pm.queryIntentActivities(gameIntent, 0)
-            .map { it.activityInfo.packageName }
-            .distinct()
 
-        // Filter out system packages.
-        val packages = fromCategory.filter { pkg ->
-            systemPrefixes.none { pkg == it || pkg.startsWith("$it.") } &&
+        // Apps that declare the GAME launcher category (older / explicit signal).
+        val gameIntent = Intent(Intent.ACTION_MAIN).addCategory("android.intent.category.GAME")
+        val categoryGamePkgs = pm.queryIntentActivities(gameIntent, 0)
+            .map { it.activityInfo.packageName }
+            .toSet()
+
+        // Every launchable user app — most modern games (CoD, RDR, KOTOR, Stardew, etc.) don't
+        // declare the GAME launcher category, so we instead classify by appCategory == GAME, which
+        // the Play Store sets for games, plus the legacy game flag and the GAME-category set above.
+        val launcherIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+        val launchablePkgs = pm.queryIntentActivities(launcherIntent, 0)
+            .map { it.activityInfo.packageName }
+
+        val packages = (categoryGamePkgs + launchablePkgs).distinct().filter { pkg ->
+            if (systemPrefixes.any { pkg == it || pkg.startsWith("$it.") }) return@filter false
             runCatching {
-                val info = pm.getPackageInfo(pkg, 0)
-                (info.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) == 0
+                val ai = pm.getApplicationInfo(pkg, 0)
+                // Skip pre-installed system apps (unless the user updated one from the store).
+                val isSystem = (ai.flags and ApplicationInfo.FLAG_SYSTEM) != 0 &&
+                               (ai.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) == 0
+                if (isSystem) return@runCatching false
+                // Must be launchable so we can actually open it.
+                if (pm.getLaunchIntentForPackage(pkg) == null) return@runCatching false
+
+                pkg in categoryGamePkgs ||
+                    ai.category == ApplicationInfo.CATEGORY_GAME ||
+                    @Suppress("DEPRECATION") (ai.flags and ApplicationInfo.FLAG_IS_GAME) != 0
             }.getOrDefault(false)
         }
 

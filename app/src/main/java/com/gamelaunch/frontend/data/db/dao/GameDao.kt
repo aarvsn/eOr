@@ -25,6 +25,35 @@ interface GameDao {
     @Query("SELECT * FROM games WHERE is_scraped = 0 ORDER BY title ASC")
     suspend fun getUnscrapedGames(): List<GameEntity>
 
+    /**
+     * Games that still need scraping for the enabled options: never scraped, or scraped but
+     * missing any artwork/metadata the user has turned on. Games that already have everything
+     * enabled are skipped. Flags are passed as 1/0.
+     */
+    @Query(
+        """
+        SELECT g.* FROM games g
+        LEFT JOIN game_media m ON m.game_id = g.id
+        WHERE g.rom_filename NOT LIKE '.%'
+          AND (
+            g.is_scraped = 0
+            OR (:needMeta = 1 AND g.description IS NULL)
+            OR (:needBox = 1 AND m.box_art_local IS NULL AND m.box_art_remote IS NULL)
+            OR (:needShot = 1 AND m.screenshot_local IS NULL AND m.screenshot_remote IS NULL)
+            OR (:needWheel = 1 AND m.wheel_logo_local IS NULL AND m.wheel_logo_remote IS NULL)
+            OR (:needVideo = 1 AND m.video_local IS NULL AND m.video_remote IS NULL)
+          )
+        ORDER BY g.title ASC
+        """
+    )
+    suspend fun getGamesNeedingScrape(
+        needMeta: Int,
+        needBox: Int,
+        needShot: Int,
+        needWheel: Int,
+        needVideo: Int
+    ): List<GameEntity>
+
     @Query("SELECT * FROM games WHERE is_favorite = 1 ORDER BY title ASC")
     fun getFavorites(): Flow<List<GameEntity>>
 

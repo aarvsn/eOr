@@ -26,6 +26,21 @@ class GameRepositoryImpl @Inject constructor(
     override suspend fun getUnscrapedGames(): List<Game> =
         gameDao.getUnscrapedGames().map(GameEntity::toDomain)
 
+    override suspend fun getGamesNeedingScrape(
+        needMeta: Boolean,
+        needBox: Boolean,
+        needShot: Boolean,
+        needWheel: Boolean,
+        needVideo: Boolean
+    ): List<Game> =
+        gameDao.getGamesNeedingScrape(
+            if (needMeta) 1 else 0,
+            if (needBox) 1 else 0,
+            if (needShot) 1 else 0,
+            if (needWheel) 1 else 0,
+            if (needVideo) 1 else 0
+        ).map(GameEntity::toDomain)
+
     override fun getFavorites(): Flow<List<Game>> =
         gameDao.getFavorites().map { it.map(GameEntity::toDomain) }
 

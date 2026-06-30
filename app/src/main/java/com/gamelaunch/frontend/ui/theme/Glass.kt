@@ -137,10 +137,11 @@ fun Modifier.glassChip(
     accent: Color = BrandBlue
 ): Modifier {
     val dark = LocalDarkMode.current
+    // Opaque fills so the drop shadow stays behind the chip instead of bleeding through it.
     val unselectedGradient = if (dark)
-        listOf(Color.White.copy(alpha = 0.16f), Color.White.copy(alpha = 0.08f))
+        listOf(Color(0xFF1E2A4D), Color(0xFF161F3C))
     else
-        listOf(Color.White.copy(alpha = 0.72f), Color.White.copy(alpha = 0.48f))
+        listOf(Color(0xFFFFFFFF), Color(0xFFEDF0F7))
     val shadowColor = if (selected) accent else if (dark) Color(0xFF000820) else Color(0xFF2A3550)
     return this
         .shadow(
@@ -160,7 +161,8 @@ fun Modifier.glassChip(
         .border(
             width = 1.dp,
             brush = Brush.verticalGradient(
-                listOf(Color.White.copy(alpha = 0.9f), Color.White.copy(alpha = 0.3f))
+                if (dark) listOf(Color.White.copy(alpha = 0.22f), Color.White.copy(alpha = 0.06f))
+                else listOf(Color.White.copy(alpha = 0.9f), Color.White.copy(alpha = 0.3f))
             ),
             shape = shape
         )

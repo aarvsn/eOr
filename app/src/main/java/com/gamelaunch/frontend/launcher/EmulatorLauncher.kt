@@ -149,6 +149,12 @@ class EmulatorLauncher @Inject constructor(
         "net.play.ptmk.ps2" to
             LaunchSpec("xyz.aethersx2.android.EmulationActivity",
                        romExtraKey = "bootPath", action = Intent.ACTION_MAIN),
+        // GameCube / Wii — Dolphin boots a game when MainActivity gets an "AutoStartFile" path
+        // extra. It must NOT be an ACTION_VIEW intent (its MainActivity rejects VIEW), otherwise
+        // it just opens the game-list menu and sits on a loading screen.
+        "org.dolphinemu.dolphinemu" to
+            LaunchSpec("org.dolphinemu.dolphinemu.ui.main.MainActivity",
+                       romExtraKey = "AutoStartFile", action = Intent.ACTION_MAIN),
         // PSP — PPSSPP reads getData().
         "org.ppsspp.ppsspp"     to LaunchSpec("org.ppsspp.ppsspp.PpssppActivity"),
         "org.ppsspp.ppssppgold" to LaunchSpec("org.ppsspp.ppsspp.PpssppActivity"),

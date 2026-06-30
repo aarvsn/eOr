@@ -196,33 +196,37 @@ fun SettingsScreen(
                     }
                 },
                 actions = {
-                    // Gradient "Go to Library" button — also persists any typed ScreenScraper creds.
-                    Box(
-                        modifier = Modifier
-                            .padding(end = 12.dp)
-                            .clip(RoundedCornerShape(50))
-                            .background(gradientBrush)
-                            .clickable {
-                                viewModel.saveCredentials()
-                                viewModel.finishSetup()
-                                onGoToLibrary()
+                    // Only shown during first-launch setup (no back button yet) so the user has a
+                    // way to finish and enter the library. When opened from the library the back
+                    // button already covers this, so the redundant action is hidden.
+                    if (onBack == null) {
+                        Box(
+                            modifier = Modifier
+                                .padding(end = 12.dp)
+                                .clip(RoundedCornerShape(50))
+                                .background(gradientBrush)
+                                .clickable {
+                                    viewModel.saveCredentials()
+                                    viewModel.finishSetup()
+                                    onGoToLibrary()
+                                }
+                                .padding(horizontal = 14.dp, vertical = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    "Library",
+                                    style  = MaterialTheme.typography.labelLarge,
+                                    color  = Color.White
+                                )
+                                Spacer(Modifier.width(4.dp))
+                                Icon(
+                                    Icons.AutoMirrored.Filled.ArrowForward,
+                                    contentDescription = null,
+                                    tint     = Color.White,
+                                    modifier = Modifier.size(14.dp)
+                                )
                             }
-                            .padding(horizontal = 14.dp, vertical = 8.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                "Library",
-                                style  = MaterialTheme.typography.labelLarge,
-                                color  = Color.White
-                            )
-                            Spacer(Modifier.width(4.dp))
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowForward,
-                                contentDescription = null,
-                                tint     = Color.White,
-                                modifier = Modifier.size(14.dp)
-                            )
                         }
                     }
                 },
