@@ -3,6 +3,7 @@ package com.gamelaunch.frontend.ui.screen.settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
@@ -25,7 +26,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.PermMedia
@@ -252,13 +255,26 @@ fun SettingsScreen(
                     when (selectedTab) {
                         SettingsTab.GENERAL -> {
                             DisplaySection(state, viewModel)
+                            Spacer(Modifier.height(4.dp))
+                            SystemSortSection(state, viewModel)
                         }
                         SettingsTab.MEDIA -> {
-                            ScreenScraperSection(state, viewModel, onScrapeAllClick)
-                            Spacer(Modifier.height(4.dp))
-                            ArtworkDatabaseSection(state, viewModel)
-                            Spacer(Modifier.height(4.dp))
-                            MediaImportSection(state, viewModel, onPickMediaFolder = { mediaFolderPicker.launch(null) })
+                            // The three media sources are rarely used together, so they share one
+                            // card with an inline segmented selector instead of stacking.
+                            var mediaSub by rememberSaveable { mutableStateOf(0) }
+                            SegmentedTabs(
+                                options  = listOf("ScreenScraper", "Artwork DB", "Import"),
+                                selected = mediaSub,
+                                onSelect = { mediaSub = it }
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            SettingsCard {
+                                when (mediaSub) {
+                                    0 -> ScreenScraperBody(state, viewModel, onScrapeAllClick)
+                                    1 -> ArtworkDatabaseBody(state, viewModel)
+                                    else -> MediaImportBody(state, viewModel, onPickMediaFolder = { mediaFolderPicker.launch(null) })
+                                }
+                            }
                         }
                         SettingsTab.GAMES -> {
                             RomLibrarySection(
@@ -342,11 +358,159 @@ private fun DisplaySection(state: SettingsUiState, viewModel: SettingsViewModel)
             checked         = state.showRecentlyPlayed,
             onCheckedChange = viewModel::setShowRecentlyPlayed
         )
-        CardSwitchRow(
-            label           = "Dark mode",
-            checked         = state.darkMode,
-            onCheckedChange = viewModel::setDarkMode
+        Spacer(Modifier.height(10.dp))
+        Text(
+            "Appearance",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
         )
+        Spacer(Modifier.height(8.dp))
+        ThemePicker(selectedDark = state.darkMode, onSelect = viewModel::setDarkMode)
+    }
+}
+
+// ── Section: Sort Systems ─────────────────────────────────────────────────
+
+@Composable
+private fun SystemSortSection(state: SettingsUiState, viewModel: SettingsViewModel) {
+    SettingsSectionHeader("Sort Systems")
+    SettingsCard {
+        Text(
+            "Choose how your consoles are ordered. Pick up to two — the first is the primary sort, the second breaks ties.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(12.dp))
+        com.gamelaunch.frontend.domain.platform.SystemSort.entries.forEach { sort ->
+            val rank = state.systemSort.indexOf(sort)   // -1 if not selected
+            val isSel = rank >= 0
+            val disabled = !isSel && state.systemSort.size >= 2
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 5.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .clickable(enabled = !disabled) { viewModel.toggleSystemSort(sort) }
+                    .padding(vertical = 8.dp, horizontal = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    if (isSel) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
+                    contentDescription = null,
+                    tint = when {
+                        isSel    -> ElectricBlue
+                        disabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                        else     -> MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    sort.label,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (disabled) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                            else MaterialTheme.colorScheme.onSurface,
+                    fontWeight = if (isSel) FontWeight.SemiBold else FontWeight.Normal
+                )
+                Spacer(Modifier.weight(1f))
+                if (isSel) {
+                    Box(
+                        modifier = Modifier
+                            .size(22.dp)
+                            .clip(RoundedCornerShape(50))
+                            .background(gradientBrush),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "${rank + 1}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** Two visual cards — Light / Dark — each previewing the UI, with the active one highlighted. */
+@Composable
+private fun ThemePicker(selectedDark: Boolean, onSelect: (Boolean) -> Unit) {
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+        ThemeOption("Light", dark = false, selected = !selectedDark, onClick = { onSelect(false) }, modifier = Modifier.weight(1f))
+        ThemeOption("Dark",  dark = true,  selected = selectedDark,  onClick = { onSelect(true) },  modifier = Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun ThemeOption(
+    label: String,
+    dark: Boolean,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val accent      = ElectricBlue
+    val bg          = if (dark) Color(0xFF06091A) else Color(0xFFEDEFF4)
+    val cardColor   = if (dark) Color(0xFF172044) else Color(0xFFFFFFFF)
+    val barColors   = listOf(Color(0xFF7C8CFF), Color(0xFFB07BFF), Color(0xFFFF7AA8))
+    val tileShade   = if (dark) 0.55f else 0f
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(14.dp))
+            .border(
+                width = if (selected) 2.dp else 1.dp,
+                color = if (selected) accent else MaterialTheme.colorScheme.outline,
+                shape = RoundedCornerShape(14.dp)
+            )
+            .clickable(onClick = onClick)
+            .padding(8.dp)
+    ) {
+        // Mini UI mock-up: background, a top accent bar and three colourful tiles.
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(74.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(bg)
+                .padding(7.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Box(
+                Modifier.fillMaxWidth(0.55f).height(7.dp)
+                    .clip(RoundedCornerShape(50)).background(accent)
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
+                barColors.forEach { c ->
+                    Box(
+                        Modifier.weight(1f).height(30.dp)
+                            .clip(RoundedCornerShape(5.dp))
+                            .background(androidx.compose.ui.graphics.lerp(c, Color.Black, tileShade))
+                    )
+                }
+            }
+            Box(
+                Modifier.fillMaxWidth(0.8f).height(6.dp)
+                    .clip(RoundedCornerShape(50)).background(cardColor)
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                if (selected) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
+                contentDescription = null,
+                tint = if (selected) accent else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(Modifier.width(6.dp))
+            Text(
+                label,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
     }
 }
 
@@ -496,13 +660,11 @@ private fun EmulatorsSection(
 // ── Section: ScreenScraper ────────────────────────────────────────────────
 
 @Composable
-private fun ScreenScraperSection(
+private fun ScreenScraperBody(
     state: SettingsUiState,
     viewModel: SettingsViewModel,
     onScrapeAllClick: () -> Unit
 ) {
-    SettingsSectionHeader("ScreenScraper (Recommended)")
-    SettingsCard {
         Text(
             "ScreenScraper is the default scraper — it provides the best box art, screenshots, wheel logos, and video previews. " +
             "Create a free account at screenscraper.fr, then enter your username and password below. " +
@@ -591,15 +753,12 @@ private fun ScreenScraperSection(
             onClick  = onScrapeAllClick,
             modifier = Modifier.fillMaxWidth()
         )
-    }
 }
 
 // ── Section: Artwork Database ─────────────────────────────────────────────
 
 @Composable
-private fun ArtworkDatabaseSection(state: SettingsUiState, viewModel: SettingsViewModel) {
-    SettingsSectionHeader("Artwork Database")
-    SettingsCard {
+private fun ArtworkDatabaseBody(state: SettingsUiState, viewModel: SettingsViewModel) {
         Text(
             "LaunchBox DB — box art & screenshots. ~190 MB, one-time download. No account needed.",
             style = MaterialTheme.typography.bodySmall,
@@ -672,19 +831,16 @@ private fun ArtworkDatabaseSection(state: SettingsUiState, viewModel: SettingsVi
                 }
             }
         }
-    }
 }
 
 // ── Section: Media Import ─────────────────────────────────────────────────
 
 @Composable
-private fun MediaImportSection(
+private fun MediaImportBody(
     state: SettingsUiState,
     viewModel: SettingsViewModel,
     onPickMediaFolder: () -> Unit
 ) {
-    SettingsSectionHeader("Media Import")
-    SettingsCard {
         Text(
             "Point to your ES-DE downloaded_media folder to use art & videos you already scraped.",
             style = MaterialTheme.typography.bodySmall,
@@ -749,7 +905,6 @@ private fun MediaImportSection(
             }
             else -> {}
         }
-    }
 }
 
 // ── Section: RetroAchievements ────────────────────────────────────────────
@@ -840,6 +995,44 @@ private fun RetroAchievementsSection(state: SettingsUiState, viewModel: Settings
 }
 
 // ── Reusable design system components ─────────────────────────────────────
+
+/** Inline segmented control — connected pill segments, the selected one filled. */
+@Composable
+private fun SegmentedTabs(
+    options: List<String>,
+    selected: Int,
+    onSelect: (Int) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        options.forEachIndexed { i, label ->
+            val isSel = i == selected
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(9.dp))
+                    .then(if (isSel) Modifier.background(gradientBrush) else Modifier)
+                    .clickable { onSelect(i) }
+                    .padding(vertical = 9.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    label,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (isSel) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = if (isSel) FontWeight.SemiBold else FontWeight.Normal,
+                    maxLines = 1
+                )
+            }
+        }
+    }
+}
 
 @Composable
 private fun SettingsSectionHeader(title: String) {

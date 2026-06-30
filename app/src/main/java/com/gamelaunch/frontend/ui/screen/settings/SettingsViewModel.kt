@@ -7,6 +7,7 @@ import com.gamelaunch.frontend.domain.model.ScraperConfig
 import com.gamelaunch.frontend.domain.repository.EmulatorRepository
 import com.gamelaunch.frontend.domain.repository.RetroAchievementsRepository
 import com.gamelaunch.frontend.domain.repository.ScraperRepository
+import com.gamelaunch.frontend.domain.platform.SystemSort
 import com.gamelaunch.frontend.domain.repository.SettingsRepository
 import com.gamelaunch.frontend.domain.usecase.EsdeImportStatus
 import com.gamelaunch.frontend.domain.usecase.ImportEsdeMediaUseCase
@@ -52,7 +53,8 @@ data class SettingsUiState(
     val mediaFolderPath: String = "",
     val esdeImportStatus: EsdeImportStatus? = null,
     val showRecentlyPlayed: Boolean = true,
-    val darkMode: Boolean = false
+    val darkMode: Boolean = false,
+    val systemSort: List<SystemSort> = emptyList()
 )
 
 @HiltViewModel
@@ -93,16 +95,23 @@ class SettingsViewModel @Inject constructor(
                     videoDelayMs = delay,
                     videoMuted = muted
                 )
-            }.collect { newState ->
+            }.collect { owned ->
+                // Merge only the fields this combine owns; everything else (darkMode, systemSort,
+                // RA creds, etc.) is collected separately and must be preserved.
                 _uiState.update { current ->
-                    newState.copy(
-                        emulatorDetecting = current.emulatorDetecting,
-                        emulatorDetectResult = current.emulatorDetectResult,
-                        lbSyncStatus = current.lbSyncStatus,
-                        lbGameCount = current.lbGameCount,
-                        mediaFolderPath = current.mediaFolderPath,
-                        esdeImportStatus = current.esdeImportStatus,
-                        showRecentlyPlayed = current.showRecentlyPlayed
+                    current.copy(
+                        romRootPath = owned.romRootPath,
+                        ssId = owned.ssId,
+                        ssPassword = owned.ssPassword,
+                        layoutMode = owned.layoutMode,
+                        scrapeMetadata = owned.scrapeMetadata,
+                        scrapeBoxArt = owned.scrapeBoxArt,
+                        scrapeScreenshots = owned.scrapeScreenshots,
+                        scrapeWheelLogos = owned.scrapeWheelLogos,
+                        scrapeVideos = owned.scrapeVideos,
+                        preferredRegion = owned.preferredRegion,
+                        videoDelayMs = owned.videoDelayMs,
+                        videoMuted = owned.videoMuted
                     )
                 }
             }
@@ -128,6 +137,11 @@ class SettingsViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
+            settingsRepository.systemSort.collect { sorts ->
+                _uiState.update { it.copy(systemSort = sorts) }
+            }
+        }
+        viewModelScope.launch {
             settingsRepository.raUsername.collect { u ->
                 _uiState.update { it.copy(raUsername = u) }
             }
@@ -150,6 +164,17 @@ class SettingsViewModel @Inject constructor(
 
     fun setDarkMode(enabled: Boolean) {
         viewModelScope.launch { settingsRepository.setDarkMode(enabled) }
+    }
+
+    /** Toggle a system-sort key. Selected keys are an ordered list of up to two (primary first). */
+    fun toggleSystemSort(sort: SystemSort) {
+        val current = _uiState.value.systemSort
+        val next = when {
+            sort in current      -> current - sort
+            current.size < 2     -> current + sort
+            else                 -> current   // already two — deselect one first
+        }
+        viewModelScope.launch { settingsRepository.setSystemSort(next) }
     }
 
     fun updateRaUsername(value: String) = _uiState.update { it.copy(raUsername = value, raLoginResult = null) }

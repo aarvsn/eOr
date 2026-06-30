@@ -6,6 +6,7 @@ import com.gamelaunch.frontend.domain.repository.SettingsRepository
 import com.gamelaunch.frontend.ui.theme.LayoutMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import com.gamelaunch.frontend.domain.platform.SystemSort
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -49,6 +50,8 @@ class SettingsRepositoryImpl @Inject constructor(
     override val isFirstLaunch: Flow<Boolean> = dataStore.isFirstLaunch
     override val showRecentlyPlayed: Flow<Boolean> = dataStore.showRecentlyPlayed
     override val darkMode: Flow<Boolean> = dataStore.darkMode
+    override val systemSort: Flow<List<SystemSort>> =
+        dataStore.systemSort.map { names -> names.mapNotNull { SystemSort.fromName(it) } }
     override val raUsername: Flow<String> = dataStore.raUsername
     override val raApiKey: Flow<String> = dataStore.raApiKey
     override val raToken: Flow<String> = dataStore.raToken
@@ -84,6 +87,7 @@ class SettingsRepositoryImpl @Inject constructor(
     override suspend fun setFirstLaunchComplete() { dataStore.setFirstLaunchComplete() }
     override suspend fun setShowRecentlyPlayed(enabled: Boolean) { dataStore.setShowRecentlyPlayed(enabled) }
     override suspend fun setDarkMode(enabled: Boolean) { dataStore.setDarkMode(enabled) }
+    override suspend fun setSystemSort(keys: List<SystemSort>) { dataStore.setSystemSort(keys.map { it.name }) }
     override suspend fun setRaApiKey(apiKey: String) { dataStore.setRaApiKey(apiKey) }
     override suspend fun setRaSession(username: String, token: String, points: Int, softcorePoints: Int) {
         dataStore.setRaSession(username, token, points, softcorePoints)

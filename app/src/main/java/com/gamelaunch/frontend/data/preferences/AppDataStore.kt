@@ -37,6 +37,7 @@ class AppDataStore @Inject constructor(@ApplicationContext private val context: 
         val FIRST_LAUNCH = booleanPreferencesKey("first_launch")
         val SHOW_RECENTLY_PLAYED = booleanPreferencesKey("show_recently_played")
         val DARK_MODE = booleanPreferencesKey("dark_mode")
+        val SYSTEM_SORT = stringPreferencesKey("system_sort")
         val RA_USERNAME = stringPreferencesKey("ra_username")
         val RA_API_KEY = stringPreferencesKey("ra_api_key")
         val RA_TOKEN = stringPreferencesKey("ra_token")
@@ -60,6 +61,10 @@ class AppDataStore @Inject constructor(@ApplicationContext private val context: 
     val isFirstLaunch: Flow<Boolean> = context.dataStore.data.map { it[Keys.FIRST_LAUNCH] ?: true }
     val showRecentlyPlayed: Flow<Boolean> = context.dataStore.data.map { it[Keys.SHOW_RECENTLY_PLAYED] ?: true }
     val darkMode: Flow<Boolean> = context.dataStore.data.map { it[Keys.DARK_MODE] ?: false }
+    // Up to two sort keys, comma-joined (e.g. "RELEASE_DATE,BRAND"). Empty = default order.
+    val systemSort: Flow<List<String>> = context.dataStore.data.map {
+        it[Keys.SYSTEM_SORT]?.split(",")?.filter { s -> s.isNotBlank() } ?: emptyList()
+    }
     val raUsername: Flow<String> = context.dataStore.data.map { it[Keys.RA_USERNAME] ?: "" }
     val raApiKey: Flow<String> = context.dataStore.data.map { it[Keys.RA_API_KEY] ?: "" }
     val raToken: Flow<String> = context.dataStore.data.map { it[Keys.RA_TOKEN] ?: "" }
@@ -84,6 +89,7 @@ class AppDataStore @Inject constructor(@ApplicationContext private val context: 
     suspend fun setFirstLaunchComplete() = context.dataStore.edit { it[Keys.FIRST_LAUNCH] = false }
     suspend fun setShowRecentlyPlayed(enabled: Boolean) = context.dataStore.edit { it[Keys.SHOW_RECENTLY_PLAYED] = enabled }
     suspend fun setDarkMode(enabled: Boolean) = context.dataStore.edit { it[Keys.DARK_MODE] = enabled }
+    suspend fun setSystemSort(keys: List<String>) = context.dataStore.edit { it[Keys.SYSTEM_SORT] = keys.joinToString(",") }
     suspend fun setRaApiKey(apiKey: String) = context.dataStore.edit {
         it[Keys.RA_API_KEY] = apiKey
     }

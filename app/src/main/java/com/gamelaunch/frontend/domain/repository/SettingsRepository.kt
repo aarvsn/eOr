@@ -1,6 +1,7 @@
 package com.gamelaunch.frontend.domain.repository
 
 import com.gamelaunch.frontend.domain.model.ScraperConfig
+import com.gamelaunch.frontend.domain.platform.SystemSort
 import com.gamelaunch.frontend.ui.theme.LayoutMode
 import kotlinx.coroutines.flow.Flow
 
@@ -14,6 +15,7 @@ interface SettingsRepository {
     val isFirstLaunch: Flow<Boolean>
     val showRecentlyPlayed: Flow<Boolean>
     val darkMode: Flow<Boolean>
+    val systemSort: Flow<List<SystemSort>>
     val raUsername: Flow<String>
     val raApiKey: Flow<String>
     val raToken: Flow<String>
@@ -37,6 +39,7 @@ interface SettingsRepository {
     suspend fun setFirstLaunchComplete()
     suspend fun setShowRecentlyPlayed(enabled: Boolean)
     suspend fun setDarkMode(enabled: Boolean)
+    suspend fun setSystemSort(keys: List<SystemSort>)
     suspend fun setRaApiKey(apiKey: String)
     suspend fun setRaSession(username: String, token: String, points: Int, softcorePoints: Int)
     suspend fun clearRaCredentials()
