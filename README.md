@@ -28,6 +28,7 @@
 - 🔄 **Save Sync** — keep your emulator saves in sync across devices with peer-to-peer syncing (powered by Syncthing) and one-QR-code device pairing. eOr shows which of your installed emulators are ready to sync, with optional Wi-Fi-only and charging-only conditions.
 - 👥 **Friends** — see what your friends are playing and their RetroAchievements score, right on the home screen. Add friends by sharing a link or tapping a nearby player on the same Wi-Fi — it's fully peer-to-peer with **no account, no login, and nothing stored online**. Turn the whole feature off any time with a single toggle.
 - 📱 **More than ROMs** — bring in your installed Android games and Steam / PC streaming launchers alongside your retro collection.
+- 🌐 **Web Transfer** — send games, BIOS files, box art, background images and even your settings straight from any computer's browser over Wi-Fi — no cable, no SD-card shuffling, no software to install. eOr hosts a little page on the device: open the address (or scan the QR code), enter the one-time PIN to pair, and drag your files in. It stays on your local network, and the PIN changes every time you turn it on.
 - ⚡ **Fast & tidy** — a 512 MB artwork cache, instant navigation, and a scanner that keeps your library in sync as ROMs come and go.
 - ➡️ **Weekly Releases** - with v2 we are moving to a weekly release model so every weekend you will get the most up to date version of eOr 
 
