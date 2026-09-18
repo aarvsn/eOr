@@ -43,6 +43,9 @@ val GameColorScheme = darkColorScheme(
     onSurface            = IceWhite,
     surfaceVariant       = NavyCard,
     onSurfaceVariant     = SteelGray,
+    surfaceContainer     = Color(0xFF0F173A),
+    surfaceContainerHigh = Color(0xFF17224A),
+    surfaceContainerLow  = Color(0xFF0A0F26),
     outline              = NavyBorder,
     outlineVariant       = Color(0xFF182045),
     surfaceTint          = ElectricBlue,
@@ -50,7 +53,6 @@ val GameColorScheme = darkColorScheme(
 )
 
 // Light counterpart — used by screens that opt into the user's light/dark choice
-// (e.g. Settings wraps itself in this when LocalDarkMode is false).
 val GameLightColorScheme = lightColorScheme(
     primary              = ElectricBlue,
     onPrimary            = Color.White,
@@ -70,6 +72,9 @@ val GameLightColorScheme = lightColorScheme(
     onSurface            = TileText,
     surfaceVariant       = Color(0xFFE4E8F1),
     onSurfaceVariant     = TileSub,
+    surfaceContainer     = Color(0xFFF3F5FA),
+    surfaceContainerHigh = Color(0xFFE8ECF4),
+    surfaceContainerLow  = Color(0xFFF8F9FC),
     outline              = Color(0xFFC4CCDB),
     outlineVariant       = Color(0xFFD7DDE9),
     surfaceTint          = ElectricBlue,
