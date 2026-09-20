@@ -107,7 +107,7 @@ fun AppTheme(
         LocalBackgroundBranding provides branding
     ) {
         MaterialTheme(
-            colorScheme = GameColorScheme,
+            colorScheme = if (darkMode) GameColorScheme else GameColorScheme,
             typography  = GameTypography,
             content     = content
         )
